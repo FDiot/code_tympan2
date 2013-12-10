@@ -11,6 +11,6 @@ Documentation for Developers
    convention
    tools
    testing
-   contribute
+
    ongoingwork
    api

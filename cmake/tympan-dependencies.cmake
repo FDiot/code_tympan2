@@ -85,17 +85,13 @@ ExternalProject_Add(GTest
   # Configuration step. GTest doc said "Use shared (DLL) run-time lib even when
   # Google Test is built as static lib."
   CMAKE_ARGS -Dgtest_force_shared_crt=ON
-
   # Installation step. Disable install step.
   INSTALL_COMMAND ""
 )
-
-# Get some properties from GTest project.
 ExternalProject_Get_Property (GTest SOURCE_DIR BINARY_DIR)
 # SOURCE_DIR is related to the GTest project.
 include_directories (${SOURCE_DIR}/include)
 #NB Adding GTest include in the non-test tree is to enable gtest_prod.h
-
 ## We now process this 3rd party list of directories according to
 ## http://www.mail-archive.com/cmake@cmake.org/msg21493.html
 
