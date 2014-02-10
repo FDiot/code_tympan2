@@ -23,6 +23,9 @@
 #ifdef TYMPAN_USE_PRECOMPILED_HEADER
 #include "Tympan/MetierSolver/DataManagerMetier/TYPHMetier.h"
 #endif // TYMPAN_USE_PRECOMPILED_HEADER
+
+#include <algorithm>
+
 #include "Tympan/Tools/OMessageManager.h"
 
 // Frequence de travail minimale
@@ -67,17 +70,17 @@ OSpectre::OSpectre(double defaultValue) : _valid(true), _type(SPECTRE_TYPE_ATT),
     }
 }
 
-OSpectre::OSpectre(const double* valeurs, const short& nbVal, const short& decalage)
+OSpectre::OSpectre(const double* valeurs, unsigned nbVal, unsigned decalage)
 {
     unsigned int i;
 
     // D'abord on initialise les valeurs
     for (i = 0 ; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        _module[i] = 0.0;
+        _module[i] = _defaultValue;
     }
 
-    unsigned int maxInd = (unsigned int)(nbVal + decalage) < TY_SPECTRE_DEFAULT_NB_ELMT ? nbVal : TY_SPECTRE_DEFAULT_NB_ELMT;
+    unsigned int maxInd = std::min(nbVal + decalage ,TY_SPECTRE_DEFAULT_NB_ELMT);
     for (i = decalage ; i < maxInd; i++)
     {
         _module[i] = valeurs[i - decalage];
