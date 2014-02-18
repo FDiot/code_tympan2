@@ -17,8 +17,6 @@
  *
  */
 
-
-
 #ifdef _MSC_VER
 #   pragma warning (disable : 4786)
 #endif
@@ -952,9 +950,7 @@ void TYCalcul::addToSelection(TYElement* pElt, bool recursif /*=true*/)
 bool TYCalcul::remToSelection(TYUUID id)
 {
     _elementSelection.remove(id);
-
     setIsGeometryModified(true);
-
     return true;
 }
 
@@ -1545,14 +1541,13 @@ bool TYCalcul::go()
     // Fusion des sites
     LPTYSiteNode pMergeSite = pProjet->getSite()->merge();
     pMergeSite->update(true);
-    pMergeSite->getTopographie()->sortTerrains(); // Tri des terrains par ordre croissant des surfaces
+    pMergeSite->getTopographie()->sortTerrainsBySurface();
     pMergeSite->updateAcoustique(true);
-
 
     // Actualisation de l'altimetrie des recepteurs (securite)
     pProjet->updateAltiRecepteurs(pMergeSite->getTopographie()->getAltimetrie());
 
-    pMergeSite->init(this); // TODO document what's going on here
+    pMergeSite->setAtmosphere(getAtmosphere());
 
     TYNameManager::get()->enable(false);
 
@@ -1579,21 +1574,22 @@ bool TYCalcul::go()
 #endif
 
     OMessageManager::get()->info("Recuperation de la liste des sources");
-
     TYMapElementTabSources& mapElementSources = _pResultat->getMapEmetteurSrcs();
     pMergeSite->getInfrastructure()->getAllSrcs(this, mapElementSources);
 
-    TYTabSourcePonctuelleGeoNode sources; // Creation d'une collection des sources
+    OMessageManager::get()->info("Creation des sources");
+    TYTabSourcePonctuelleGeoNode sources;
     getAllSources(mapElementSources, sources);
 
     OMessageManager::get()->info("Selection des points de reception actifs");
+    selectActivePoint(pMergeSite);
 
-    selectActivePoint(pMergeSite); // Supprime les points a l'interieur des volumes
-    TYTabPointCalculGeoNode recepteurs; // Creation d'une collection de recepteurs
+    OMessageManager::get()->info("Creation des recepteurs");
+    TYTabPointCalculGeoNode recepteurs;
     getAllRecepteurs(recepteurs);
 
     OMessageManager::get()->info("Selection des trajets actifs");
-    buildValidTrajects(sources, recepteurs); // Supprime les points trop proches d'une sources
+    buildValidTrajects(sources, recepteurs);
 
     // XXX Instantiate and call the SolverDataModelBuilder here ...
     if (isCalculPossible(static_cast<int>(sources.size()), static_cast<int>(recepteurs.size()), pMergeSite))
@@ -1615,16 +1611,14 @@ bool TYCalcul::go()
         pInfos = NULL;
 
         TYSolverInterface* pSolver = TYPluginManager::get()->getSolver(getSolverId());
-
         // XXX ... and pass the SolverDataModel built here.
-
         ret = pSolver->solve(*pMergeSite, *this);
-
         pSolver->purge();
 
         // Cumul de la pression aux differents points de calcul
         if (ret) // Si l'etape precedente s'est mal passee, inutile de continuer
         {
+            OMessageManager::get()->info("Contruction matrice resultat");
             // Puisque le calcul est OK on va construire la matrice resultat
             _pResultat->buildSources(sources);
             _pResultat->buildRecepteurs(recepteurs);
@@ -1644,9 +1638,9 @@ bool TYCalcul::go()
     }
     else
     {
+        OMessageManager::get()->info("Calcul impossible: arrt.");
         ret = false;
     }
-
 
     if (ret)
     {

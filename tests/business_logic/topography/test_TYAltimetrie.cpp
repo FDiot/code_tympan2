@@ -65,7 +65,6 @@ static  const double precision = 1e-6;
 
 TEST(TYAltimetryTest, update_point_altitude)
 {
-
     // Create altimetry
     TYAltimetrie* pAlti = buildSlopeAltimetry();
 
@@ -143,7 +142,6 @@ static const double level_curve_B_alti = 20.0;
 
 LPTYCourbeNiveau addHillToSimpleSite(LPTYSiteNode pSite)
 {
-
 #define NB_POINTS_LEVEL_CURVE 5
     LPTYCourbeNiveau pCrb = new TYCourbeNiveau();
     // Initialise the level curve

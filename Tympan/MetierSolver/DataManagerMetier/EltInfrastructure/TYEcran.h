@@ -37,9 +37,6 @@ class OSegment3D;
 
 /**
  * Classe representant un ecran mince
- *
- * @author Projet_Tympan
- *
  */
 class TYEcran: public TYAcousticFaceSet
 {
@@ -94,7 +91,6 @@ public:
      */
     virtual int isInside(const TYPoint& pt) const;
 
-
     void setacousticFacesPourCalcul(bool bPourCalculTrajet);
 
     /**
@@ -105,7 +101,7 @@ public:
     TYTabPoint getContour() const;
 
     /**
-     * Retourne le tableau des faces inférieurs d'un écran (s'il comporte plusieurs segments)
+     * Retourne le tableau des faces infrieurs d'un cran (s'il comporte plusieurs segments)
      */
     TYTabLPPolygon getContours() const;
 

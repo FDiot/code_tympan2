@@ -357,7 +357,7 @@ bool TYElement::operator != (const TYElement& other) const
 
 bool TYElement::deepCopy(const TYElement* pOther, bool copyId /*=true*/)
 {
-    if (!pOther) { return false; }
+    if (!pOther) { return false; }     // XXX assert(pOther);
 
     if (!pOther->inherits(getClassName())) { return false; }
 

@@ -17,14 +17,11 @@
  *
  */
 
-
-
 #ifdef TYMPAN_USE_PRECOMPILED_HEADER
 #include "Tympan/MetierSolver/DataManagerMetier/TYPHMetier.h"
 #endif // TYMPAN_USE_PRECOMPILED_HEADER
 
 #include "Tympan/MetierSolver/ToolsMetier/OSegment3D.h"
-
 
 int TYSurfaceInterface::intersects(const TYSurfaceInterface* pSurf, OSegment3D& seg) const
 {

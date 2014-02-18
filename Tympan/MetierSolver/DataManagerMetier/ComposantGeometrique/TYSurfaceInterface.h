@@ -15,9 +15,6 @@
 
 /*
  *
- *
- *
- *
  */
 
 #ifndef __TY_SURFACEINTERFACE__
@@ -35,9 +32,6 @@ class TYGeometryNode;
 /**
  * Classe abstraite qui offre une interface utilisable par des composants
  * ayant des proprietes geometriques surfaciques.
- *
- * @author Projet_Tympan
- *
  */
 class TYSurfaceInterface
 {

@@ -24,7 +24,6 @@
 #define __TY_ROUTE__
 
 #include "gtest/gtest_prod.h"
-
 #include "Tympan/MetierSolver/DataManagerMetier/ComposantGeoAcoustique/TYAcousticLine.h"
 #include "Tympan/MetierSolver/DataManagerMetier/ComposantAcoustique/TYTrafic.h"
 
@@ -45,9 +44,6 @@ typedef std::vector<LPTYRouteGeoNode> TYTabRouteGeoNode;
 
 /**
  * Comprend les proprietes acoustiques et geometriques d'une route.
- *
- * @author Projet_Tympan
- *
  */
 class TYRoute: public TYAcousticLine
 {

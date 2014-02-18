@@ -15,9 +15,6 @@
 
 /*
  *
- *
- *
- *
  */
 
 #ifndef __O_SUBJECT__
@@ -28,19 +25,17 @@
 #endif
 
 #include "OObserver.h"
-#include <vector>
+#include <set>
 
 using namespace std;
 
 
 ///Collection de reference de OObserver.
-typedef vector<OObserver*> OTabPtrObserver;
+typedef set<OObserver*> OTabPtrObserver;
 
 
 /**
  * Classe abstraite Subject du pattern Observer.
- *
- * @author Projet_Tympan
  * @see     OObserver
  */
 class OSubject

@@ -13,27 +13,18 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-/*
- *
- */
-
-
-
 #include <cstdlib>
 #include <cassert>
-
 
 #ifdef TYMPAN_USE_PRECOMPILED_HEADER
 #include "Tympan/MetierSolver/DataManagerMetier/TYPHMetier.h"
 #endif // TYMPAN_USE_PRECOMPILED_HEADER
-
 
 #include "Tympan/MetierSolver/DataManagerCore/TYPreferenceManager.h"
 #include "Tympan/MetierSolver/DataManagerCore/TYXMLManager.h"
 #include "Tympan/Tools/TYProgressManager.h"
 #include "Tympan/Tools/OLocalizator.h"
 #include "Tympan/Tools/OMessageManager.h"
-
 
 #include <QDir>
 
@@ -1290,9 +1281,9 @@ void TYSiteNode::getListFaces(const bool useEcran, TYTabAcousticSurfaceGeoNode& 
 
 }
 
-void TYSiteNode::init(const LPTYCalcul& pCalcul)
+void TYSiteNode::setAtmosphere(const LPTYAtmosphere& pAtmosphere)
 {
-    _pTopographie->updateSol(*pCalcul->getAtmosphere());
+    _pTopographie->updateSol(*pAtmosphere);
 }
 
 void TYSiteNode::setChildsNotInCurrentCalcul()
@@ -1554,13 +1545,11 @@ LPTYSiteNode TYSiteNode::merge()
 
         LPTYSiteNode pSiteTmp = pSiteChild->merge();
 
-
         // On copie les elements du site enfant en prenant compte le changement de repere
         appendSite(pSiteTmp, pSiteNodeGeoNode->getMatrix(), pSite);
     }
 
-    // Copie du terrain par defaut
-    pSite->getTopographie()->sortTerrains(); // Tri des terrains par ordre croissant des surfaces
+    pSite->getTopographie()->sortTerrainsBySurface();
     pSite->setProjet(_pProjet);
 
     return pSite;

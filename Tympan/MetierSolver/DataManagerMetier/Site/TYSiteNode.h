@@ -15,9 +15,6 @@
 
 /*
  *
- *
- *
- *
  */
 
 #ifndef __TY_SITENODE__
@@ -351,13 +348,13 @@ class TYSiteNode: public TYElement
     virtual bool remFromCalcul();
 
     /**
-     * Initialise pour le calcul
+     * Donne atmosphere à utiliser pour topographie
      */
-    virtual void init(const LPTYCalcul& pCalcul);
+    virtual void setAtmosphere(const LPTYAtmosphere& pAtmosphere);
 
     /**
-     * Precalcul du nombre d'onde dans le sol des que les caracteristiques de l'atmosphere sont connus
-     * Fonction executees au lancement du calcul
+     * Precalcul du nombre d'onde dans le sol des que les caracteristiques de
+     * l'atmosphere sont connus. Fonction executees au lancement du calcul.
      */
     void updateSol();
 
