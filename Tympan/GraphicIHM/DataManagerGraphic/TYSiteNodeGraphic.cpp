@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) <2012> <EDF-R&D> <FRANCE>
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,8 +11,8 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*/ 
- 
+*/
+
 /**
  * \file TYSiteNodeGraphic.cpp
  * \brief Repri¿½sentation graphique d'un ensemble de sites
@@ -314,12 +314,6 @@ void TYSiteNodeGraphic::display(GLenum mode /*=GL_RENDER*/)
         ((TYTopographieGraphic*)((TYElementGraphic*)getElement()->getTopographie()->getGraphicObject()))->unsetBackgroundImage();
     }
 
-    // vieaw of altimetry for the current site (i.e. main site on the display)
-	TYSiteNode* pSiteNode = getElement();
-	if (pSiteNode->getRoot())
-	{
-		static_cast<TYTopographieGraphic*>(pSiteNode->getTopographie()->getGraphicObject().getRealPointer())->showAlti(true);
-	}
 	getElement()->getTopographie()->getGraphicObject()->display(mode);
     getElement()->getInfrastructure()->getGraphicObject()->display(mode);
     // Sites childs
@@ -333,8 +327,6 @@ void TYSiteNodeGraphic::display(GLenum mode /*=GL_RENDER*/)
         // Le site n'est affichi¿½ que s'il est dans le calcul courant
         if (TabSite.at(i)->getElement()->isInCurrentCalcul())
         {
-			TYSiteNode* pSubSite = TYSiteNode::safeDownCast(TabSite.at(i)->getElement());
-			static_cast<TYTopographieGraphic*>(pSubSite->getTopographie()->getGraphicObject().getRealPointer())->showAlti(false);
             TabSite.at(i)->getGraphicObject()->display(mode);   //az++
         }
     }//az++

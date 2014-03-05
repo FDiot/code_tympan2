@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) <2012> <EDF-R&D> <FRANCE>
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,8 +11,8 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*/ 
- 
+*/
+
 /*
  *
  *
@@ -67,6 +67,13 @@ public:
 	 */
 	ORepere3D(const OPoint3D& origin, const OVector3D& vec);
 
+
+    /**
+     * Constructor from a matrix
+     *
+     * \param matrix
+     */
+    ORepere3D(const OMatrix& matrix);
 
     /**
      * Destructor.
@@ -133,7 +140,14 @@ public:
      * \return <code>true</code> si le calcul a reussi,
      *         <code>false</code> sinon.
      */
-    bool getMatChangeRep(OMatrix& matrix);
+    bool getMatChangeRep(OMatrix& matrix) const;
+
+    /**
+     * \return The homogeneous matrix associated with this pose (aka ORepere)
+     *
+     * This is the Matrix build by getMatChangeRep()
+     */
+    OMatrix asMatrix() const;
 
     //Members
 public:

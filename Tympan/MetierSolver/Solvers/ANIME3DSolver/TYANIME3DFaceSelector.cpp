@@ -48,11 +48,6 @@ bool TYANIME3DFaceSelector::buildCalcStruct(TYStructSurfIntersect *&tabPolygon, 
     // On nettoie le tableau des faces
     if (tabPolygon)
     {
-        for (size_t i = 0; i < tabPolygonSize; ++i)
-            if (tabPolygon[i].pSurfGeoNode)
-            {
-                tabPolygon[i].pSurfGeoNode->release();
-            }
         delete [] tabPolygon;
         tabPolygonSize = 0;
     }
@@ -90,10 +85,6 @@ bool TYANIME3DFaceSelector::buildCalcStruct(TYStructSurfIntersect *&tabPolygon, 
     {
         // Creation d'une structure de type TYStructSurfIntersect
         tabPolygon[i].pSurfGeoNode = tabFaces[i];
-
-        // Incrementation manuel du compteur de reference
-        // Necessaire pour la non destruction du pointeur
-        tabPolygon[i].pSurfGeoNode->addRef();
 
         // Ajout de la matrice inverse
         tabPolygon[i].matInv = tabFaces[i]->getMatrix().getInvert();
@@ -178,10 +169,6 @@ bool TYANIME3DFaceSelector::buildCalcStruct(TYStructSurfIntersect *&tabPolygon, 
     {
         // Creation d'une structure de type TYStructSurfIntersect
         tabPolygon[i].pSurfGeoNode = tabFaces[i];
-
-        // Incrementation manuel du compteur de reference
-        // Necessaire pour la non destruction du pointeur
-        tabPolygon[i].pSurfGeoNode->addRef();
 
         tabPolygon[i].matInv = OMatrix();
 

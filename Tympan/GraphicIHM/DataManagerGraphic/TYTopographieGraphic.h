@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) <2012> <EDF-R&D> <FRANCE>
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,8 +11,8 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*/ 
- 
+*/
+
 /**
  * \file TYTopographieGraphic.h
  * \brief Representation graphique d'une topographie (fichier header)
@@ -56,16 +56,10 @@ public:
 
     void setBackgroundImage(QString sTopoFileName, int semiX, int semiY, TYPoint ptPosition, OVector3D bgOrientation);
     void unsetBackgroundImage();
-
-	void showAlti(bool show = true) { _showAlti = show; }
-
     // Membres
 protected:
     ///Objet graphic pour materialiser l'emprise.
     LPTYPolyLineGraphic _pEmpriseGraphic;
-
-	/// boolean to switch altimetrie view on/off
-	bool _showAlti;
 };
 
 

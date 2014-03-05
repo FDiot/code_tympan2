@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) <2012> <EDF-R&D> <FRANCE>
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,8 +11,8 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*/ 
- 
+*/
+
 /*
  *
  */
@@ -212,7 +212,7 @@ TYVegetation* TYSol::useVegetation(bool state /*= true*/)
 
 OSpectreComplex TYSol::abso(const double& angle, const double& rR, const TYAtmosphere& Atmo) const
 {
-    if (_bMiroir) { return OSpectreComplex( TYComplex(1.0,0.0) ); }
+    if (_bMiroir) { return OSpectreComplex(TYComplex(1.0, 0.0)); }
 
     OSpectreComplex abso ;
 
@@ -253,8 +253,8 @@ void TYSol::calculZc()
 
 OSpectreComplex TYSol::calculZs(const double phi, const TYAtmosphere& atmos) const
 {
-    OSpectreComplex Zs; 
-	const TYComplex j = TYComplex(0.0, 1.0);
+    OSpectreComplex Zs;
+    const TYComplex j = TYComplex(0.0, 1.0);
     const TYComplex CPLX_UN  = TYComplex(1.0, 0.0);
     const TYComplex CPLX_MUN = TYComplex(-1.0, 0.0);
     double k;
@@ -277,7 +277,7 @@ OSpectreComplex TYSol::calculZs(const double phi, const TYAtmosphere& atmos) con
         Zs.getTabValImag()[i] = cplxVal.imag();
     }
 
-	return Zs;
+    return Zs;
 }
 
 void TYSol::calculNombreDOnde(const TYAtmosphere& atmos)
@@ -321,7 +321,7 @@ void TYSol::calculNombreDOnde(const TYAtmosphere& atmos)
     }
 }
 
-OSpectreComplex TYSol::calculW(const OSpectreComplex &Zs, const double rR, const double phi, const TYAtmosphere& atmos) const
+OSpectreComplex TYSol::calculW(const OSpectreComplex& Zs, const double rR, const double phi, const TYAtmosphere& atmos) const
 {
     OSpectreComplex w;
 
@@ -574,7 +574,7 @@ OSpectreComplex TYSol::calculFw(const OSpectreComplex& w) const
 }
 
 
-OSpectreComplex TYSol::calculRp(const OSpectreComplex &Zs, const double& phi) const
+OSpectreComplex TYSol::calculRp(const OSpectreComplex& Zs, const double& phi) const
 {
     OSpectreComplex rP;
 
@@ -620,8 +620,8 @@ OSpectreComplex TYSol::calculQ(const double& phi, const OSpectreComplex& rp, con
 OSpectreComplex TYSol::calculQ(const double& phi, const OSpectreComplex& fw) const
 {
     OSpectreComplex Q ;
-	TYAtmosphere atmos; // En attendant ...
-	const OSpectreComplex Zs = calculZs(phi, atmos);
+    TYAtmosphere atmos; // En attendant ...
+    const OSpectreComplex Zs = calculZs(phi, atmos);
     const OSpectreComplex rp = calculRp(Zs, phi);
 
     const TYComplex CPLX_UN = TYComplex(1.0, 0.0);
@@ -643,7 +643,7 @@ OSpectreComplex TYSol::calculQ(const double& phi, const OSpectreComplex& fw) con
 
 OSpectreComplex TYSol::calculQ(const double& angle, const double& rR, const TYAtmosphere& Atmo) const
 {
- 	const OSpectreComplex Zs = calculZs(angle, Atmo);
+    const OSpectreComplex Zs = calculZs(angle, Atmo);
     OSpectreComplex rP = calculRp(Zs, angle);
     OSpectreComplex w  = calculW(Zs, rR, angle, Atmo);
     OSpectreComplex fW = calculFw(w);

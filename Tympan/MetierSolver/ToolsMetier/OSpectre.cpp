@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) <2012> <EDF-R&D> <FRANCE>
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,8 +11,8 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*/ 
- 
+*/
+
 /*
  *
  */
@@ -80,7 +80,7 @@ OSpectre::OSpectre(const double* valeurs, unsigned nbVal, unsigned decalage)
         _module[i] = _defaultValue;
     }
 
-    unsigned int maxInd = std::min(nbVal + decalage ,TY_SPECTRE_DEFAULT_NB_ELMT);
+    unsigned int maxInd = (unsigned int)(nbVal + decalage) < TY_SPECTRE_DEFAULT_NB_ELMT ? nbVal : TY_SPECTRE_DEFAULT_NB_ELMT;
     for (i = decalage ; i < maxInd; i++)
     {
         _module[i] = valeurs[i - decalage];

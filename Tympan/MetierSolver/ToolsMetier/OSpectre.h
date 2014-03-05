@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) <2012> <EDF-R&D> <FRANCE>
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,8 +11,8 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*/ 
- 
+*/
+
 /*
  *
  */
@@ -169,7 +169,7 @@ public:
     virtual const double* getTabValReel() const {return _module; }
 
     /// Nombre de valeurs dans le spectre
-    virtual unsigned int getNbValues() const;
+    virtual unsigned int getNbValues() const ;
 
     /**
      * Initialisation d'un spectre a une valeur.
@@ -195,7 +195,7 @@ public:
      *
      * @return La valeur reelle du complexe correspondant.
      */
-   virtual  double getValueReal(float freq, bool* pValid = 0);
+    virtual  double getValueReal(float freq, bool* pValid = 0);
 
     /**
     * Recuperation d'un intervalle de valeurs reelles au tableau frequence/complexe
@@ -216,7 +216,7 @@ public:
     virtual OSpectre toDB() const;
 
     /// Conversion en grandeur physique.
-   virtual  OSpectre toGPhy() const;
+    virtual  OSpectre toGPhy() const;
 
     /// Sommation arithmetique de deux spectres en 1/3 d'octave.
     virtual OSpectre sum(const OSpectre& spectre) const;
@@ -329,12 +329,12 @@ public:
      */
     static OTabFreq getTabFreqExact(); // XXX These are the frequencies to use in solver
 
-	/**
+    /**
      * \fn OSpectre getOSpectreFreqExact()
-	 * \brief Retourne le tableau des frequences exactes.
+     * \brief Retourne le tableau des frequences exactes.
      * \return Le tableau des frequences exactes.
      */
-	static OSpectre getOSpectreFreqExact();
+    static OSpectre getOSpectreFreqExact();
 
     /// Construction du tableau frequence/indice
     static std::map<float, int>  setMapFreqIndice();

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) <2012> <EDF-R&D> <FRANCE>
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,14 +11,11 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*/ 
- 
+*/
+
 /*
  *
  */
-
-
-
 
 #include "ORepere3D.h"
 #include "OGeometrie.h"
@@ -43,6 +40,11 @@ ORepere3D::ORepere3D(const OPoint3D& origin, const OVector3D& vecI, const OVecto
     _vecJ(vecJ),
     _vecK(vecK)
 {
+}
+
+ORepere3D::ORepere3D(const OMatrix& matrix)
+{
+    set(matrix);
 }
 
 ORepere3D::ORepere3D(const OPoint3D& origin, const OVector3D& vec) : 
@@ -143,7 +145,7 @@ void ORepere3D::normalize()
     _vecK.normalize();
 }
 
-bool ORepere3D::getMatChangeRep(OMatrix& matrix)
+bool ORepere3D::getMatChangeRep(OMatrix& matrix) const
 {
     bool res = false;
 
@@ -154,6 +156,7 @@ bool ORepere3D::getMatChangeRep(OMatrix& matrix)
     // Init matrix
     matrix.unite();
 
+    // Change assertion for small values for numerical stability
     if ((normeI != 0.0) && (normeJ != 0.0) && (normeK != 0.0))
     {
         res = true;
@@ -175,4 +178,11 @@ bool ORepere3D::getMatChangeRep(OMatrix& matrix)
     }
 
     return res;
+}
+
+OMatrix ORepere3D::asMatrix() const
+{
+    OMatrix matrix;
+    getMatChangeRep(matrix);
+    return matrix;
 }
