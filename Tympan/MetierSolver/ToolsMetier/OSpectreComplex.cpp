@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) <2012> <EDF-R&D> <FRANCE>
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,27 +11,22 @@
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-*/ 
- 
+*/
+
 /*
  *
  */
 
 
-
-
-#ifdef TYMPAN_USE_PRECOMPILED_HEADER
-#include "Tympan/MetierSolver/DataManagerMetier/TYPHMetier.h"
-#endif // TYMPAN_USE_PRECOMPILED_HEADER
+#include "OSpectreComplex.h"
 
 #include "Tympan/Tools/OMessageManager.h"
-#include <complex>
 
-OSpectreComplex::OSpectreComplex(const double &defModule, const double &defPhase) : OSpectre(defModule)
+OSpectreComplex::OSpectreComplex() : OSpectre()
 {
     for (unsigned int i = 0 ; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        _phase[i] = defPhase;
+        _phase[i] = 0.0;
     }
 }
 
@@ -194,6 +189,7 @@ OSpectreComplex OSpectreComplex::multi(const double& coefficient) const
 
     return s;
 }
+
 OSpectreComplex OSpectreComplex::operator / (const OSpectreComplex& spectre) const
 {
 	// Produit de deux complexes en module/phase
@@ -332,21 +328,6 @@ OSpectreComplex OSpectreComplex::sumComplex(const OSpectreComplex& spectre) cons
     {
         s._module[i] = this->_module[i] + spectre._module[i];
         s._phase[i] = this->_phase[i] + spectre._phase[i];
-    }
-    return s;
-}
-
-OSpectreComplex OSpectreComplex::sumComplex(const OSpectre& spectre) const
-{
-    OSpectreComplex s;
-
-    // Recopie de l'empreinte du spectre
-    s._etat = _etat;
-    s._type = _type;
-
-    for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
-    {
-		s._module[i] = this->_module[i] + spectre.getTabValReel()[i];
     }
     return s;
 }

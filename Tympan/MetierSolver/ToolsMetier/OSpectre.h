@@ -20,7 +20,9 @@
 #ifndef __O_SPECTRE__
 #define __O_SPECTRE__
 
-#include "Tympan/MetierSolver/DataManagerCore/TYElement.h"
+#include <vector>
+#include <map>
+
 
 ///Type de spectre.
 enum TYSpectreType { SPECTRE_TYPE_ATT, SPECTRE_TYPE_ABSO, SPECTRE_TYPE_LW, SPECTRE_TYPE_LP, SPECTRE_TYPE_AUTRE };
@@ -84,9 +86,14 @@ class OSpectre
     // Methodes
 public:
     /**
+     * Constructeur par defaut.
+     */
+    OSpectre();
+
+    /**
      * Constructeur par defaut avec une valeur par defaut
      */
-    OSpectre(const double &defaultValue = TY_SPECTRE_DEFAULT_VALUE);
+    OSpectre(double defaultValue);
 
     /**
      * Constructeur a partir d'un tableau de valeurs (besoin pour harmonoise)
@@ -94,7 +101,7 @@ public:
      * nbVal  ==> Nombre de valeurs dans le tableau
      * decalage ==> decalage en frequence par rapport a la bande standard TYMPAN (16-16000)
      */
-    OSpectre(const double* valeurs, const short& nbVal, const short& decalage);
+    OSpectre(const double* valeurs, unsigned nbVal, unsigned decalage);
 
     /**
      * Constructeur par copie.
@@ -154,16 +161,15 @@ public:
     virtual const TYSpectreEtat getEtat() {return _etat;};
 
     /// Force l'etat du spectre (a utiliser avec prudence ...)
-    virtual void setEtat(TYSpectreEtat etat) { _etat = etat; }
+    void setEtat(TYSpectreEtat etat) { _etat = etat; }
 
+    /// XXX These are the modulus to put into the solver model
     /// Set/Get du tableau des valeurs reelles
     virtual double* getTabValReel() { return _module; }
     virtual const double* getTabValReel() const {return _module; }
 
     /// Nombre de valeurs dans le spectre
-    virtual unsigned int getNbValues();
-
-    virtual const unsigned int getNbValues() const ;
+    virtual unsigned int getNbValues() const;
 
     /**
      * Initialisation d'un spectre a une valeur.
@@ -294,7 +300,7 @@ public:
     virtual const double sigma() const;
 
     // Conversion en spectre "leger"
-    virtual void toSpectreLeger(TYSpectreLeger& spectre) const;
+    void toSpectreLeger(TYSpectreLeger& spectre) const;
 
     // initialisation des valeurs reelles a partir d'un spectre "leger"
     virtual void fromSpectreLeger(const TYSpectreLeger& spectre);
@@ -321,7 +327,7 @@ public:
      *
      * @return Le tableau des frequences exactes.
      */
-    static OTabFreq getTabFreqExact();
+    static OTabFreq getTabFreqExact(); // XXX These are the frequencies to use in solver
 
 	/**
      * \fn OSpectre getOSpectreFreqExact()
@@ -355,6 +361,7 @@ public:
 protected:
 
     // ==== MEMBRES STATIQUES
+    // CAUTION Check how those static members behave in shared libraries
 
     ///Tableau des frequences en Hz centrales normalisees en tiers d'octave.
     static const float _freqNorm[];

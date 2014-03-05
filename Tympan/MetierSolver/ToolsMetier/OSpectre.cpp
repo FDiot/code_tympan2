@@ -23,6 +23,9 @@
 #ifdef TYMPAN_USE_PRECOMPILED_HEADER
 #include "Tympan/MetierSolver/DataManagerMetier/TYPHMetier.h"
 #endif // TYMPAN_USE_PRECOMPILED_HEADER
+
+#include <algorithm>
+
 #include "Tympan/Tools/OMessageManager.h"
 
 // Frequence de travail minimale
@@ -50,7 +53,16 @@ const float OSpectre::_freqNorm[] = {   /*  0 */    16.0,    20.0,    25.0,
 
 std::map<float, int> OSpectre::_mapFreqIndice = setMapFreqIndice();
 
-OSpectre::OSpectre(const double &defaultValue) : _valid(true), _type(SPECTRE_TYPE_ATT), _etat(SPECTRE_ETAT_DB), _form(SPECTRE_FORM_TIERS)
+
+OSpectre::OSpectre() : _valid(true), _type(SPECTRE_TYPE_ATT), _etat(SPECTRE_ETAT_DB), _form(SPECTRE_FORM_TIERS)
+{
+    for (unsigned int i = 0 ; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
+    {
+        _module[i] = _defaultValue;
+    }
+}
+
+OSpectre::OSpectre(double defaultValue) : _valid(true), _type(SPECTRE_TYPE_ATT), _etat(SPECTRE_ETAT_DB), _form(SPECTRE_FORM_TIERS)
 {
     for (unsigned int i = 0 ; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
@@ -58,17 +70,17 @@ OSpectre::OSpectre(const double &defaultValue) : _valid(true), _type(SPECTRE_TYP
     }
 }
 
-OSpectre::OSpectre(const double* valeurs, const short& nbVal, const short& decalage)
+OSpectre::OSpectre(const double* valeurs, unsigned nbVal, unsigned decalage)
 {
     unsigned int i;
 
     // D'abord on initialise les valeurs
     for (i = 0 ; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        _module[i] = 0.0;
+        _module[i] = _defaultValue;
     }
 
-    unsigned int maxInd = (unsigned int)(nbVal + decalage) < TY_SPECTRE_DEFAULT_NB_ELMT ? nbVal : TY_SPECTRE_DEFAULT_NB_ELMT;
+    unsigned int maxInd = std::min(nbVal + decalage ,TY_SPECTRE_DEFAULT_NB_ELMT);
     for (i = decalage ; i < maxInd; i++)
     {
         _module[i] = valeurs[i - decalage];
@@ -138,7 +150,7 @@ OSpectre OSpectre::operator * (const OSpectre& spectre) const
 
     for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        s._module[i] = _module[i] * spectre._module[i];
+        s._module[i] = this->_module[i] * spectre._module[i];
     }
 
     return s;
@@ -151,7 +163,7 @@ OSpectre OSpectre::operator * (const double& coefficient) const
 
     for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        s._module[i] = _module[i] * coefficient;
+        s._module[i] = this->_module[i] * coefficient;
     }
 
     return s;
@@ -164,7 +176,7 @@ OSpectre OSpectre::operator + (const double& valeur) const
 
     for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        s._module[i] = _module[i] + valeur;
+        s._module[i] = this->_module[i] + valeur;
     }
 
     return s;
@@ -178,7 +190,7 @@ OSpectre OSpectre::operator + (const OSpectre& spectre) const
 
     for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        s._module[i] = _module[i] + spectre._module[i];
+        s._module[i] = this->_module[i] + spectre._module[i];
     }
 
     return s;
@@ -192,7 +204,7 @@ OSpectre OSpectre::operator - (const OSpectre& spectre) const
 
     for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        s._module[i] = _module[i] - spectre._module[i];
+        s._module[i] = this->_module[i] - spectre._module[i];
     }
 
     return s;
@@ -230,7 +242,7 @@ void OSpectre::getRangeValueReal(double* valeurs, const short& nbVal, const shor
 
 double OSpectre::valGlobDBLin() const
 {
-    OSpectre s(toDB());
+    OSpectre s(this->toDB());
 
     double valeurGlob = 0.0;
     for (unsigned int i = 0 ; i < TY_SPECTRE_DEFAULT_NB_ELMT ; i++)
@@ -245,17 +257,21 @@ double OSpectre::valGlobDBLin() const
 
 double OSpectre::valGlobDBA() const
 {
-    OSpectre s(toDB().sum(OSpectre::pondA()));
+    OSpectre s(this->toDB().sum(OSpectre::pondA()));
 
     return s.valGlobDBLin();
 }
 
 OSpectre OSpectre::toDB() const
 {
-    // Si spectre deja en dB on se contente de recopier les valeurs
-    if (_etat == SPECTRE_ETAT_DB) { return *this; }
+    OSpectre s;
 
-	OSpectre s;
+    // Si spectre deja en dB on se contente de recopier les valeurs
+    if (_etat == SPECTRE_ETAT_DB)
+    {
+        s = *this;
+        return s;
+    }
 
     unsigned int i;
     s._type = _type; // Recopie du type
@@ -278,7 +294,8 @@ OSpectre OSpectre::toDB() const
     double dBVal = 0.0;
     for (i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        s._module[i] = 10.0 * log10(_module[i] / coef)    ;
+        dBVal = 10.0 * log10(this->_module[i] / coef);
+        s._module[i] = dBVal    ;
     }
 
     s._etat = SPECTRE_ETAT_DB;   // Etat explicite dB
@@ -288,9 +305,15 @@ OSpectre OSpectre::toDB() const
 
 OSpectre OSpectre::toGPhy() const
 {
-    if (_etat == SPECTRE_ETAT_LIN) { return *this; }
-
     OSpectre s;
+
+    if (_etat == SPECTRE_ETAT_LIN) // Si spectre deja en LIN on se contente de recopier les valeurs
+    {
+        s = *this;
+
+        return s;
+    }
+
     unsigned int i;
     double coef = 1.0;
 
@@ -313,7 +336,8 @@ OSpectre OSpectre::toGPhy() const
     double powVal = 0.0;
     for (i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        s._module[i] = pow(10.0, _module[i] / 10.0) * coef;
+        powVal = pow(10.0, this->_module[i] / 10.0) * coef;
+        s._module[i] = powVal;
     }
 
     s._etat = SPECTRE_ETAT_LIN;   // Etat explicite Grandeur physique
@@ -329,7 +353,7 @@ OSpectre OSpectre::sum(const OSpectre& spectre) const
 
     for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        s._module[i] = _module[i] + spectre._module[i];
+        s._module[i] = this->_module[i] + spectre._module[i];
     }
 
     return s;
@@ -344,7 +368,7 @@ OSpectre OSpectre::sum(const double& valeur) const
 
     for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        s._module[i] = _module[i] + valeur;
+        s._module[i] = this->_module[i] + valeur;
     }
 
     return s;
@@ -352,7 +376,7 @@ OSpectre OSpectre::sum(const double& valeur) const
 
 OSpectre OSpectre::sumdB(const OSpectre& spectre) const
 {
-    OSpectre tempoS1(toGPhy());
+    OSpectre tempoS1(this->toGPhy());
     OSpectre tempoS2(spectre.toGPhy());
 
     OSpectre s(tempoS1.sum(tempoS2));
@@ -373,7 +397,7 @@ OSpectre OSpectre::subst(const OSpectre& spectre) const
 
     for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        s._module[i] = _module[i] - spectre._module[i];
+        s._module[i] = this->_module[i] - spectre._module[i];
     }
 
     return s;
@@ -388,7 +412,7 @@ OSpectre OSpectre::subst(const double& valeur) const
 
     for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        s._module[i] = _module[i] - valeur;
+        s._module[i] = this->_module[i] - valeur;
     }
 
     return s;
@@ -398,7 +422,7 @@ OSpectre OSpectre::substdB(const OSpectre& spectre) const
 {
     OSpectre s;
 
-    OSpectre tempoS1(toGPhy());
+    OSpectre tempoS1(this->toGPhy());
     OSpectre tempoS2(spectre.toGPhy());
 
     // Calcul de la somme energetique
@@ -435,7 +459,7 @@ OSpectre OSpectre::mult(const OSpectre& spectre) const
 
     for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        s._module[i] = _module[i] * spectre._module[i];
+        s._module[i] = this->_module[i] * spectre._module[i];
     }
 
     return s;
@@ -450,7 +474,7 @@ OSpectre OSpectre::mult(const double& coefficient) const
 
     for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        s._module[i] = _module[i] * coefficient;
+        s._module[i] = this->_module[i] * coefficient;
     }
 
     return s;
@@ -494,7 +518,7 @@ OSpectre OSpectre::div(const double& coefficient) const
     {
         for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
         {
-            s._module[i] = _module[i] / coefficient;
+            s._module[i] = this->_module[i] / coefficient;
         }
     }
 
@@ -556,7 +580,7 @@ OSpectre OSpectre::power(const double& puissance) const
 
     for (unsigned int i = 0 ; i < TY_SPECTRE_DEFAULT_NB_ELMT ; i++)
     {
-        s._module[i] = pow(_module[i], puissance);
+        s._module[i] = pow(this->_module[i], puissance);
     }
 
     return s;
@@ -595,7 +619,7 @@ OSpectre OSpectre::tenPow() const
 
     for (unsigned int i = 0 ; i < TY_SPECTRE_DEFAULT_NB_ELMT ; i++)
     {
-        s._module[i] = pow(10.0, _module[i]);
+        s._module[i] = pow(10.0, this->_module[i]);
     }
 
     return s;
@@ -647,7 +671,7 @@ OSpectre OSpectre::sin() const
 
     for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        s._module[i] = ::sin(_module[i]);
+        s._module[i] = ::sin(this->_module[i]);
     }
 
     return s;
@@ -662,7 +686,7 @@ OSpectre OSpectre::cos() const
 
     for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        s._module[i] = ::cos(_module[i]);
+        s._module[i] = ::cos(this->_module[i]);
     }
 
     return s;
@@ -670,7 +694,7 @@ OSpectre OSpectre::cos() const
 
 OSpectre OSpectre::tan() const
 {
-    return sin().div(cos());
+    return this->sin().div(this->cos());
 }
 
 OSpectre OSpectre::abs() const
@@ -697,7 +721,7 @@ OSpectre OSpectre::sqrt() const
 
     for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        s._module[i] = ::sqrt(_module[i]);
+        s._module[i] = ::sqrt(this->_module[i]);
     }
 
     return s;
@@ -709,7 +733,7 @@ double OSpectre::valMax()
 
     for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        result = max(_module[i], result);
+        result = max(this->_module[i], result);
     }
 
     return result;
@@ -738,7 +762,7 @@ OSpectre OSpectre::seuillage(const double& min, const double max)
 
 void OSpectre::toSpectreLeger(TYSpectreLeger& spectre) const
 {
-    OSpectre s(toGPhy());
+    OSpectre s(this->toGPhy());
 
     for (unsigned int i = 0 ; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
@@ -958,8 +982,7 @@ bool OSpectre::isTonalite()const
     return false;
 }
 
-
-unsigned int OSpectre::getNbValues()
+unsigned int OSpectre::getNbValues()const
 {
     unsigned int nbFreq = TY_SPECTRE_DEFAULT_NB_ELMT;
 
@@ -975,21 +998,3 @@ unsigned int OSpectre::getNbValues()
 
     return nbFreq;
 }
-
-const unsigned int OSpectre::getNbValues()const
-{
-    unsigned int nbFreq = TY_SPECTRE_DEFAULT_NB_ELMT;
-
-    switch (_form)
-    {
-        case SPECTRE_FORM_OCT:
-            nbFreq = 9;
-            break;
-        default:
-            nbFreq = TY_SPECTRE_DEFAULT_NB_ELMT;
-            break;
-    }
-
-    return nbFreq;
-}
-
