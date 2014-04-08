@@ -26,26 +26,9 @@ bool ValidRay::validTriangleWithSpecularReflexion(Ray* r, Intersection* inter)
     vec3 normale = inter->p->getNormal(impact);
     if (normale.dot(r->direction) > 0.) { return false; }
 
-	if (globalUsePathDifValidation) // Validation sur la différence de marche due aux diffractions
+	if (globalUsePathDifValidation && !pathDiffValidationForReflection(r, impact)) // Validation sur la différence de marche due aux diffractions
 	{
-		vec3 previousPos;
-		if ( r->getEvents()->size() )
-		{
-			previousPos = r->getEvents()->back()->getPosition();
-		}
-		else
-		{
-			previousPos = r->getSource()->getPosition();
-		}
-
-		r->cumulDistance += previousPos.distance(impact);
-		vec3 origin = r->computeLocalOrigin( r->getLastPertinentEventOrSource(SPECULARREFLEXION) );
-		
-		// We compute the true path length difference between actual position and the last reflection or source
-		r->cumulDelta += ( r->cumulDistance - impact.distance(origin) ); 
-		r->cumulDistance = 0.;
-
-		if (r->cumulDelta > globalMaxPathDifference) { return false; }
+		return false;
 	}    
 	    
 	SpecularReflexion* newEvent = new SpecularReflexion(impact, r->direction, inter->p);
@@ -65,27 +48,46 @@ bool ValidRay::validTriangleWithSpecularReflexion(Ray* r, Intersection* inter)
     return false;
 }
 
-bool ValidRay::isPathLengthDifferenceValid(Ray *r, const vec3& impact, const decimal& maxDiff)
+void ValidRay::computeCumulDistance(Ray *r, const vec3& impact)
 {
-		vec3 previousPos;
-		if ( r->getEvents()->size() )
-		{
-			previousPos = r->getEvents()->back()->getPosition();
-		}
-		else
-		{
-			previousPos = r->getSource()->getPosition();
-		}
+	vec3 previousPos;
+	if ( r->getEvents()->size() )
+	{
+		previousPos = r->getEvents()->back()->getPosition();
+	}
+	else
+	{
+		previousPos = r->getSource()->getPosition();
+	}
 
-		r->cumulDistance += previousPos.distance(impact);
-		vec3 origin = r->computeLocalOrigin( r->getLastPertinentEventOrSource(SPECULARREFLEXION) );
+	r->cumulDistance += previousPos.distance(impact);
+}
+
+bool ValidRay::pathDiffValidationForReflection(Ray * r, const vec3& impact)
+{
+	vec3 origin = r->computeLocalOrigin( r->getLastPertinentEventOrSource(SPECULARREFLEXION) );
+	computeCumulDistance(r, impact);
 		
-		// We compute the true path length difference between actual position and the last reflection or source
-		decimal currentCumulDelta = r->cumulDelta + ( r->cumulDistance - impact.distance(origin) ); 
+	// We compute the true path length difference between actual position and the last reflection or source
+	r->cumulDelta += ( r->cumulDistance - impact.distance(origin) ); 
+	r->cumulDistance = 0.;
 
-		if ( currentCumulDelta > globalMaxPathDifference ) { return false; }
+	if (r->cumulDelta > globalMaxPathDifference) { return false; }	
+	
+	return true;
+}
 
-		return true;
+bool ValidRay::pathDiffValidationForDiffraction(Ray *r, const vec3& impact)
+{
+	vec3 origin = r->computeLocalOrigin( r->getLastPertinentEventOrSource(SPECULARREFLEXION) );
+	computeCumulDistance(r, impact);
+		
+	// We compute the true path length difference between actual position and the last reflection or source
+	decimal currentCumulDelta = r->cumulDelta + ( r->cumulDistance - impact.distance(origin) ); 
+
+	if ( currentCumulDelta > globalMaxPathDifference ) { return false; }
+
+	return true;
 }
 
 bool ValidRay::computeRealImpact(Ray *r, Intersection* inter, Cylindre *cylindre, vec3& impact)
@@ -129,7 +131,7 @@ bool ValidRay::validCylindreWithDiffraction(Ray* r, Intersection* inter)
 	vec3 impact = r->position + r->direction * inter->t;
 
 // Test if creating a new diffraction is allowed (depends on path length difference)
-	if ( globalUsePathDifValidation && !isPathLengthDifferenceValid(r, impact, globalMaxPathDifference) )
+	if ( globalUsePathDifValidation && !pathDiffValidationForDiffraction(r, impact) )
 	{
 		return false;
 	}   
@@ -188,9 +190,7 @@ bool ValidRay::validCylindreWithDiffraction(Ray* r, Intersection* inter)
 
     return true;
 }
-
 #ifdef _ALLOW_TARGETING_
-
 void ValidRay::appendDirectionToEvent(QSharedPointer<Event> e, TargetManager& targets)
 {
     std::vector<vec3> &ponctualTargets = targets.getTargets();
