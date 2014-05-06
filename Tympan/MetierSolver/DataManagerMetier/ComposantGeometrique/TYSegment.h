@@ -22,6 +22,7 @@
 
 #include "Tympan/MetierSolver/DataManagerCore/TYElement.h"
 #include "Tympan/MetierSolver/DataManagerCore/TYColorInterface.h"
+#include "Tympan/MetierSolver/ToolsMetier/OMatrix.h"
 #include "TYPoint.h"
 
 // TYRectangle.h est inclu a la fin de la declaration de TYSegment.
@@ -126,12 +127,6 @@ public:
      * @return TYPoint Position du centre du cercle
      */
     TYPoint centerOfCurvedPath(const double& R) const;
-    /**
-     * Retourne la hauteur du sommet de l'arc de cercle de rayon R reliant les deux extremites du segment
-     *
-     * @return double Hauteur du sommet
-     */
-    double topOfCurvedPath(const double& R) const;
 
     /**
      * Calcule la longueur du trajet de rayon R passant par les extremites du segment

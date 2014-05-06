@@ -23,6 +23,7 @@
 #include "Tympan/MetierSolver/DataManagerMetier/Commun/TYTrajet.h"
 #include "Tympan/MetierSolver/DataManagerMetier/Site/TYTopographie.h"
 #include "Tympan/MetierSolver/DataManagerMetier/Site/TYSiteNode.h"
+#include "Tympan/MetierSolver/ToolsMetier/Defines.h"
 #include "TYSolver.h"
 
 TYAcousticModel::TYAcousticModel(TYSolver& solver)
@@ -125,13 +126,13 @@ void TYAcousticModel::compute(const TYSIntersection* tabIntersect, const OSegmen
 
     // Calcul des parcours lateraux
     // 1. Vertical
-    bool bObstacle = computeCheminsAvecEcran(rayon, pSrcGeoNode, ptsTop, vertical, tabChemins, distance);
+    computeCheminsAvecEcran(rayon, pSrcGeoNode, ptsTop, vertical, tabChemins, distance);
 
     // 2. Horizontal gauche
-    bObstacle &= computeCheminsAvecEcran(rayon, pSrcGeoNode, ptsLeft, horizontal, tabChemins, distance);
+    computeCheminsAvecEcran(rayon, pSrcGeoNode, ptsLeft, horizontal, tabChemins, distance);
 
     // 3. Horizontal droite
-    bObstacle &= computeCheminsAvecEcran(rayon, pSrcGeoNode, ptsRight, horizontal, tabChemins, distance);
+    computeCheminsAvecEcran(rayon, pSrcGeoNode, ptsRight, horizontal, tabChemins, distance);
 
     if (tabChemins.size() == 0)
     {
@@ -1332,27 +1333,6 @@ OSpectre TYAcousticModel::limAttDiffraction(const OSpectre& sNC, const OSpectre&
     }
 
     return s;
-}
-
-
-void TYAcousticModel::addCheminToTrajet(const TYTabChemin& TabChemin, TYTrajet& trajet) const
-{
-    int j;
-
-    // On fixe l'atmosphere de chaque chemin et on ajoute celui-ci au trajet
-    for (j = 0 ; j < TabChemin.size() ; j++)
-    {
-        trajet.addChemin(TabChemin.at(j));
-    }
-}
-
-void TYAcousticModel::addCheminDirectToTrajet(const TYTabChemin& TabChemin, TYTrajet& trajet) const
-{
-    // On fixe l'atmosphere de chaque chemin et on ajoute celui-ci au trajet
-    for (unsigned int j = 0 ; j < TabChemin.size() ; j++)
-    {
-        trajet.addCheminDirect(TabChemin.at(j));
-    }
 }
 
 bool TYAcousticModel::solve(TYTrajet& trajet)

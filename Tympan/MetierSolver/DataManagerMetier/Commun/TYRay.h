@@ -125,10 +125,10 @@ public:
     bool deepCopy(TYRay* pOther);
 
     /*!
-    * \fn void setSource(TYSourcePonctuelle *_source TYPoint &globalPosition)
+    * \fn void setSource(TYSourcePonctuelle *_source OPoint3D &globalPosition)
     * \brief Place la source du rayon. Le premier point de la polyligne est mis a jour
     */
-    void setSource(TYSourcePonctuelle* _source, TYPoint& globalPosition);
+    void setSource(TYSourcePonctuelle* _source, OPoint3D& globalPosition);
 
     /*!
     * \fn void setSource(TYSourcePonctuelle *_source)
@@ -144,10 +144,10 @@ public:
     TYSourcePonctuelle* getSource() {return _source;}
 
     /*!
-    * \fn void setRecepteur(TYPointControl *_recep TYPoint &globalPosition)
+    * \fn void setRecepteur(TYPointControl *_recep OPoint3D &globalPosition)
     * \brief Place le recepteur du rayon. Le dernier point de la polyligne est mis a jour
     */
-    void setRecepteur(TYPointCalcul* _recep, TYPoint& globalPosition);
+    void setRecepteur(TYPointCalcul* _recep, OPoint3D& globalPosition);
 
     /*!
     * \fn void setRecepteur(TYPointCalcul *)
@@ -268,12 +268,6 @@ public:
     double getLength();
 
     /*!
-    * \fn double getDistanceSR()
-    * \brief Renvoie la distance source-recepteur du rayon
-    */
-    double getDistanceSR() const;
-
-    /*!
     * \fn int getnbEvents()
     * \brief Renvoie le nombre d'evenements compris dans le rayon
     */
@@ -286,10 +280,10 @@ public:
     void setPosSourceGlobal(const OPoint3D& pos) { _posSourceGlobal = pos; }
 
     /*!
-    * \fn TYPoint& getPosSourceGlobal()
+    * \fn OPoint3D& getPosSourceGlobal()
     * \brief Get de la position de la source dans le repere global
     */
-    TYPoint& getPosSourceGlobal() { return _posSourceGlobal; }
+    OPoint3D& getPosSourceGlobal() { return _posSourceGlobal; }
 
     /*!
     * \fn void setPosReceptGlobal(const OPoint3D& pos)
@@ -298,10 +292,10 @@ public:
     void setPosReceptGlobal(const OPoint3D& pos) { _posReceptGlobal = pos; }
 
     /*!
-    * \fn TYPoint& getPosReceptGlobal()
-    * \brief Get de la position du recepteur dans le repi¿½re global
+    * \fn OPoint3D& getPosReceptGlobal()
+    * \brief Get de la position du recepteur dans le repere global
     */
-    TYPoint& getPosReceptGlobal() { return _posReceptGlobal; }
+    OPoint3D& getPosReceptGlobal() { return _posReceptGlobal; }
 
     /*!
     * \fn void overSampleTYRay(TYRay* tyRay);
@@ -319,8 +313,8 @@ protected:
     /*!< Pointeur vers le recepteur du rayon */
     TYPointCalcul* _recepteur;
 
-    TYPoint _posSourceGlobal;
-    TYPoint _posReceptGlobal;
+    OPoint3D _posSourceGlobal;
+    OPoint3D _posReceptGlobal;
 
     /*!< Vecteurs d'evenements contenant la liste des evenements du rayon associe et leurs positions.*/
     TYTabRayEvent _events;

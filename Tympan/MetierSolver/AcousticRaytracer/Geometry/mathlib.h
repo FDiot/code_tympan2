@@ -77,6 +77,7 @@ typedef unsigned int bitSet; /*!< used to manage set of elements*/
 #define RadToDeg(a) a*=M_180DIVPI
 #define RADIANS(a)  a*M_PIDIV180
 #define DEGRES(a)   a*M_180DIVPI
+#define ABS(x) (fabs(x))
 
 #ifndef SIGN
 #define SIGN(x) ((x) > 0 ? 1 : -1)

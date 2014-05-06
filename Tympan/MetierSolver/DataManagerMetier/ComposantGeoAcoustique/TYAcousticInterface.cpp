@@ -141,7 +141,6 @@ int TYAcousticInterface::fromXML(DOM_Element domElement)
 {
     bool densiteHOk = false;
     bool densiteVOk = false;
-    bool isActiveOk = false;
     bool curRegimeOk = false;
     bool typeDistributionOk = false;
     bool useAttOk = false;
@@ -350,16 +349,6 @@ bool TYAcousticInterface::remRegime(int regimeNumber)
 void TYAcousticInterface::propagateRegime()
 {
     addRegime(buildRegime());
-}
-
-int TYAcousticInterface::checkRegimeNb(int regime) const
-{
-    if (regime <= -1)
-    {
-        regime = _curRegime;
-    }
-
-    return regime;
 }
 
 TYRegime TYAcousticInterface::buildRegime()

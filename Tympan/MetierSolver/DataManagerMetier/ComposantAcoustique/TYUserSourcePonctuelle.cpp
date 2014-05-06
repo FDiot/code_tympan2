@@ -272,7 +272,6 @@ OSpectre TYUserSourcePonctuelle::lwApparenteSrcDest(const OSegment3D& seg, const
 
     OVector3D v3D;
     double coef = 0.0;
-    double theta = 0.0;
 
     // NOTA : On prend la racine du coefficient de directivite car celui-ci est eleve au carre lors du calcul
 
@@ -295,7 +294,6 @@ OSpectre TYUserSourcePonctuelle::lwApparenteSrcDest(const OSegment3D& seg, const
             break;
         case FORCED:
             v3D = seg.toVector3D();
-            theta = this->getOrientation().angle(v3D); // Angle par rapport au vecteur directeur de la source
             s.setDefaultValue(coef);
             break;
         case CALCULATED:
@@ -306,28 +304,6 @@ OSpectre TYUserSourcePonctuelle::lwApparenteSrcDest(const OSegment3D& seg, const
     }
 
     return s;
-}
-
-const TYDirectiviteAnglesValue TYUserSourcePonctuelle::getAngles(const OVector3D dir) const
-{
-    TYDirectiviteAnglesValue angles;
-    angles._phi = 360;
-    angles._theta = 360;
-
-    TYAcousticSurface* pSurf = TYAcousticSurface::safeDownCast((TYElement*) getParent());
-
-    if (pSurf)
-    {
-        OVector3D dirXY(dir), dirZ(dir);
-
-        dirXY._z = 0;
-        if (dirZ._x != 0) { dirZ._y = 0; }
-
-        angles._phi = pSurf->normal().angle(dirXY);
-        angles._theta = pSurf->normal().angle(dirZ);
-    }
-
-    return angles;
 }
 
 int TYUserSourcePonctuelle::addRegime(TYUserSrcRegime regime)

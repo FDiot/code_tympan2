@@ -233,9 +233,6 @@ public:
     /// soustrait une valeur constante a l'ensemble du spectre
     virtual OSpectre subst(const double& valeur) const;
 
-    /// Soustraction energetique de deux spectres en 1/3 d'octave.
-    virtual OSpectre substdB(const OSpectre& spectre) const;
-
     /// multiplication de deux spectres terme a terme.
     virtual OSpectre mult(const OSpectre& spectre) const;
 
@@ -259,9 +256,6 @@ public:
     /// Calcule le log base n d'un spectre (n=10 par defaut).
     virtual OSpectre log(const double& base = 10.0) const;
 
-    /// calcule 10^spectre pour chaque terme du spectre.
-    virtual OSpectre tenPow() const;
-
     /// calcule la racine carree d'un spectre.
     virtual OSpectre racine() const;
 
@@ -273,9 +267,6 @@ public:
 
     /// calcul le cos de la partie reelle du spectre
     virtual OSpectre cos() const;
-
-    /// calcul le tan de la partie reelle du spectre
-    virtual OSpectre tan() const;
 
     /// Retourne le spectre en valeur absolues
     virtual OSpectre abs() const;
@@ -308,10 +299,19 @@ public:
     /// Existence d'une tonalite marquee
     virtual bool isTonalite()const;
 
+    /// Conversion en tiers d'octave.
+    virtual OSpectre toTOct() const;
+
+    /// Conversion en octave.
+    virtual OSpectre toOct() const;
+
     // === FONCTIONS MEMBRES STATIQUES
 
     /// Cree un spectre en lin
     static OSpectre getEmptyLinSpectre(const double& valInit = 1.0E-20);
+
+    /// Construit un spectre en octave.
+    static OSpectre makeOctSpect();
 
     /// retourne l'indice associe a une frequence
     static int getIndice(const float& freq) { return _mapFreqIndice[freq]; }

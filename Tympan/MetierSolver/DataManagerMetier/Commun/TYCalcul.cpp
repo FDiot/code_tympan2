@@ -50,6 +50,8 @@ static char THIS_FILE[] = __FILE__;
 #include "Tympan/MetierSolver/DataManagerCore/TYXMLManager.h"
 #include "Tympan/MetierSolver/DataManagerCore/TYPluginManager.h"
 
+#include "Tympan/MetierSolver/ToolsMetier/Defines.h"
+
 OPROTOINST(TYCalcul);
 TY_EXTENSION_INST(TYCalcul);
 TY_EXT_GRAPHIC_INST(TYCalcul);
@@ -539,7 +541,6 @@ int TYCalcul::fromXML(DOM_Element domElement)
 
     int etat = -1; // Etat du calcul
 
-    std::string strIDSiteCalcul;
     TYListID tempElementSelection;
     QString strSolverId;
 
@@ -1125,15 +1126,13 @@ LPTYMaillageGeoNode TYCalcul::findMaillage(const LPTYMaillage pMaillage)
 
 void TYCalcul::updateGraphicMaillage()
 {
-    TYMaillage* pMaillage = NULL;
-
+#if TY_USE_IHM
     for (unsigned int i = 0; i < getMaillages().size(); i++)
     {
-        pMaillage = getMaillage(i);
-#if TY_USE_IHM
+        TYMaillage* pMaillage = getMaillage(i);
         pMaillage->getGraphicObject()->update();
-#endif
     }
+#endif
 }
 
 bool TYCalcul::updateAltiMaillage(TYMaillageGeoNode* pMaillageGeoNode)
@@ -1160,7 +1159,6 @@ bool TYCalcul::updateAltiMaillage(TYMaillageGeoNode* pMaillageGeoNode, const TYA
     OMatrix matrixinv = matrix.getInvert();
     TYTabLPPointCalcul& tabpoint = pMaillage->getPtsCalcul();
 
-    bool cancel = false;
     bool bNoPbAlti = true; // Permet de tester si tous les points sont altimtriss correctement.
 
     if (pMaillage->getComputeAlti()) // Cas des maillages rectangulaires et lineaires horizontaux
@@ -1175,6 +1173,7 @@ bool TYCalcul::updateAltiMaillage(TYMaillageGeoNode* pMaillageGeoNode, const TYA
         {
 
 #if TY_USE_IHM
+            bool cancel = false;
             TYProgressManager::step(cancel);
             if (cancel) { break; }
 #endif // TY_USE_IHM
@@ -1523,9 +1522,6 @@ bool TYCalcul::go()
     }
 
     bool ret = true;
-    bool cancel = false;
-    unsigned int i = 0;
-
     // Reset des resultats precedents
     _pResultat->purge();
 
@@ -1566,15 +1562,7 @@ bool TYCalcul::go()
 
     xmlManager.createDoc(docName, version);
     xmlManager.addElement(pMergeSite);
-
-    if (xmlManager.save("merged.xml") == 0)
-    {
-        bool bRet = true;
-    }
-    else
-    {
-        bool bRet = false;
-    }
+    xmlManager.save("merged.xml");
 
 #endif
 

@@ -88,9 +88,6 @@ public:
     virtual std::string toXMLString();
     virtual bool fromXMLString(const std::string& sXMLString);
 
-    // Compare le contenu de deux spectre
-    virtual bool equivTo(const TYSpectre& other) const;
-
     /// Set/Get de la forme du spectre.
     virtual TYSpectreForm getForm() {return _form;}
     virtual void setForm(const TYSpectreForm& form) { _form = form; }
@@ -112,12 +109,6 @@ public:
 
     /// Set/Get du flag _isReadOnly.
     virtual void setIsReadOnly(bool flag) { _isReadOnly = flag; }
-
-    /// Conversion en tiers d'octave.
-    virtual TYSpectre toTOct() const;
-
-    /// Conversion en octave.
-    virtual TYSpectre toOct() const;
 
     /// Export du spectre au format csv en creant le fichier
     virtual void exportCSV(const std::string& filename);
@@ -146,9 +137,6 @@ public:
 
 
     // ======= METHODES STATIQUES
-
-    /// Construit un spectre en d'octave.
-    static TYSpectre makeOctSpect();
 
     /// Get/Set de la precision de stockage des resultats (XML)
     static void setXMLPrecision(const int precision = 1) { _XMLprecision = precision; }

@@ -154,7 +154,6 @@ unsigned int TYANIME3DAcousticPathFinder::getTabsSAndR(vector<vec3>& sources, ve
     vector<vec3> srcs;
 
     //Conversion des sources Tympan en source lancer de rayons
-    TYSourcePonctuelle* sourceP = NULL;
     for (unsigned int i = 0; i < _tabSources.size(); i++)
     {
         OPoint3D globalPos = computePosGlobalPoint(_tabSources.at(i));
@@ -206,9 +205,9 @@ unsigned int TYANIME3DAcousticPathFinder::getTabsSAndR(vector<vec3>& sources, ve
 }
 
 
-TYPoint TYANIME3DAcousticPathFinder::computePosGlobalPoint(const TYGeometryNode* pNode)
+OPoint3D TYANIME3DAcousticPathFinder::computePosGlobalPoint(const TYGeometryNode* pNode)
 {
-    TYPoint* pPoint;
+    OPoint3D * pPoint;
     if (pNode->getElement()->inherits("TYSourcePonctuelle"))
     {
         pPoint = TYSourcePonctuelle::safeDownCast(pNode->getElement())->getPos();
@@ -553,11 +552,11 @@ bool TYANIME3DAcousticPathFinder::setSEtRToTYRay(const unsigned int sens, Ray* r
     if (static_cast<unsigned int>(idRecep) >= _tabRecepteurs.size() || static_cast<unsigned int>(idSource) >= _tabSources.size()) { return false; }
 
     vec3 pS = _rayTracing.getSources().at(idSource).getPosition();
-    TYPoint posSourceGlobal(pS.x, pS.y, pS.z);
+    OPoint3D posSourceGlobal(pS.x, pS.y, pS.z);
     TYSourcePonctuelle* sourceP = TYSourcePonctuelle::safeDownCast(_tabSources.at(idSource)->getElement());
 
     vec3 pR = _rayTracing.getRecepteurs().at(idRecep).getPosition();
-    TYPoint posReceptGlobal(pR.x, pR.y, pR.z);
+    OPoint3D posReceptGlobal(pR.x, pR.y, pR.z);
     TYPointCalcul* recepP = TYPointCalcul::safeDownCast(_tabRecepteurs.at(idRecep)->getElement());
 
     tyRay->setSource(sourceP, posSourceGlobal);
@@ -566,14 +565,14 @@ bool TYANIME3DAcousticPathFinder::setSEtRToTYRay(const unsigned int sens, Ray* r
     //Ajout de la source
     TYRayEvent* e = new TYRayEvent();
     e->type = TYSOURCE;
-    e->pos = TYPoint(r->source->getPosition().x, r->source->getPosition().y, r->source->getPosition().z);
+    e->pos = OPoint3D(r->source->getPosition().x, r->source->getPosition().y, r->source->getPosition().z);
     e->angle = 0.0;
     tyRay->getEvents().push_back(e);
 
     e = new TYRayEvent();
     e->type = TYRECEPTEUR;
     Recepteur* recep = (static_cast<Recepteur*>(r->getRecepteur()));
-    e->pos = TYPoint(recep->getPosition().x, recep->getPosition().y, recep->getPosition().z);
+    e->pos = OPoint3D(recep->getPosition().x, recep->getPosition().y, recep->getPosition().z);
     e->angle = 0.0;
     tyRay->getEvents().push_back(e);
 
@@ -647,7 +646,7 @@ void TYANIME3DAcousticPathFinder::convertRayEventToTYRayEvent(const QSharedPoint
             break;
     }
 
-    tyrev->pos = TYPoint(rev->getPosition().x, rev->getPosition().y, rev->getPosition().z);
+    tyrev->pos = OPoint3D(rev->getPosition().x, rev->getPosition().y, rev->getPosition().z);
     tyrev->angle = rev->getAngle();
 }
 
@@ -771,7 +770,7 @@ void TYANIME3DAcousticPathFinder::eventPosCompute(TYRay* tyRay)
 
 double TYANIME3DAcousticPathFinder::lengthCorrection(TYRayEvent* ev1, const TYRayEvent* ev2)
 {
-    TYTabPoint tabPoint = TYPoint::checkPointsMaxDistance(ev1->pos, ev2->pos, globalOverSampleD);
+    TabPoint3D tabPoint = OPoint3D::checkPointsMaxDistance(ev1->pos, ev2->pos, globalOverSampleD);
 
     // Calculation with h for each event
     // Useful for lengths & angles
@@ -795,8 +794,8 @@ double TYANIME3DAcousticPathFinder::lengthCorrection(TYRayEvent* ev1, const TYRa
 
 double TYANIME3DAcousticPathFinder::angleCorrection(const TYRayEvent* ev1, TYRayEvent* ev2, const TYRayEvent* ev3)
 {
-    TYTabPoint tabPoint1 = TYPoint::checkPointsMaxDistance(ev1->pos, ev2->pos, globalOverSampleD);
-    TYTabPoint tabPoint2 = TYPoint::checkPointsMaxDistance(ev2->pos, ev3->pos, globalOverSampleD);
+    TabPoint3D tabPoint1 = OPoint3D::checkPointsMaxDistance(ev1->pos, ev2->pos, globalOverSampleD);
+    TabPoint3D tabPoint2 = OPoint3D::checkPointsMaxDistance(ev2->pos, ev3->pos, globalOverSampleD);
 
     // Corrects position for the only three events of interest
     OPoint3D points[3] = { tabPoint1.at(tabPoint1.size() - 2), tabPoint1.at(tabPoint1.size() - 1), tabPoint2.at(1) };
@@ -809,11 +808,6 @@ double TYANIME3DAcousticPathFinder::angleCorrection(const TYRayEvent* ev1, TYRay
 
     OVector3D vec1(points[1], points[0]);
     OVector3D vec2(points[1], points[2]);
-
-#ifdef _DEBUG
-    double angle = vec1.angle(vec2);
-    double angleComp = (M_PI - vec1.angle(vec2)) / 2.;
-#endif
 
     return (M_PI - vec1.angle(vec2)) / 2.;
 }

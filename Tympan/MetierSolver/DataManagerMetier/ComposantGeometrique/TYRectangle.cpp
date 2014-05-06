@@ -31,6 +31,7 @@
 
 #include "Tympan/Tools/OMessageManager.h"
 #include "Tympan/MetierSolver/ToolsMetier/OTriangle.h"
+#include "Tympan/MetierSolver/ToolsMetier/Defines.h"
 
 OPROTOINST(TYRectangle);
 TY_EXTENSION_INST(TYRectangle);
@@ -208,18 +209,6 @@ double TYRectangle::getMinX() const
         }
 
     return minX;
-}
-
-double TYRectangle::getMaxX() const
-{
-    double maxX = _pts[0]._x;
-    for (unsigned int i = 0; i < 3; ++i)
-        if (_pts[i + 1]._x > maxX)
-        {
-            maxX = _pts[i + 1]._x;
-        }
-
-    return maxX;
 }
 
 double TYRectangle::getMinY() const

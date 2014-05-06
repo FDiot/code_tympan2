@@ -111,7 +111,6 @@ public:
 
         it = selectedPath.find(path);
         r->computeLongueur();
-        double currentDistance = r->getLongueur();
 
         if (it != selectedPath.end()) //Il y avait deja un rayon avec le meme historique
         {

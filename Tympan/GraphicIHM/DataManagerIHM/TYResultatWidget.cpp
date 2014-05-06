@@ -635,12 +635,6 @@ void TYResultatWidget::updateTable()
     }
 }
 
-QString TYResultatWidget::getValueMsg(const int& row, const int& col, OSpectre& spectre)
-{
-    QString msg;
-    return msg;
-}
-
 OSpectre TYResultatWidget::getSpectre(const int& row, const int& col, TYCalcul* pCalcul)
 {
     OSpectre spectre;
@@ -686,7 +680,6 @@ OSpectre TYResultatWidget::getSpectre(const int& row, const int& col, TYCalcul* 
 
 void TYResultatWidget::initTabSort(int col)
 {
-    double val = 0.0;
     int row = 1; // Numero de 1ere ligne (ligne 0 = synthese)
 
     TYCalcul* pCalcul = TYCalcul::safeDownCast(getElement()->getParent());
@@ -801,7 +794,6 @@ void TYResultatWidget::affichageCellule(const int& row, const int& col, TYCalcul
     OSpectre spectre1 = getSpectre(row, col, pCalcul);
     OSpectre spectre2 = getSpectre(row, col, pCalcOp);
 
-    bool bValid = spectre2.isValid(); // Permettra de griser la cellule si non valide
     QTableWidgetItem* pItem = NULL;
     QString msg;
     double valeur = 0.0;

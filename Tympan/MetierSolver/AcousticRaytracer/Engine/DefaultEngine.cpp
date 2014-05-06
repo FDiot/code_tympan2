@@ -62,8 +62,6 @@ struct CompareVec
 
 bool DefaultEngine::process()
 {
-    std::size_t nb_event(0);
-    bool find_intersection;
     std::size_t max_size(0);
 
     QTime time;
@@ -99,11 +97,9 @@ bool DefaultEngine::process()
             Ray* current_ray = pile_traitement.top();
             pile_traitement.pop();
             //nb_rayon_traite++;
-            nb_event = current_ray->events.size();
             std::list<validRay> result;
-            find_intersection = traitementRay(current_ray, result);
+            traitementRay(current_ray, result);
 
-            unsigned int compteurValidation(0);
             for (std::list<validRay>::iterator it = result.begin(); it != result.end(); it++)
             {
                 bool currentValid = it->valid;
@@ -168,7 +164,7 @@ bool DefaultEngine::traitementRay(Ray* r, std::list<validRay> &result)
     tmin =  accelerator->traverse(r, foundPrims);
 
     // Recherche pour des recepteurs;
-	searchForReceptor(tmin, r);
+    searchForReceptor(tmin, r);
 
     //Validation des rayons en generant un evenement. Les premiers rayons valides sont des copies de l'original, le dernier est valide sans copie.
     //De cette maniere on peut valider separement des diffractions et une reflexion a partir d'un seul rayon initial.
@@ -237,7 +233,7 @@ void DefaultEngine::runStructureBenchmark()
         accel->traverse(&r, foundPrims);
     }
 
-    int totalTime = time.elapsed();
+    //int totalTime = time.elapsed();
     //std::cout << "Fin du benchmark." << std::endl;
     //std::cout << "Nombre de rayons traites : " << nbVec << std::endl;
     //std::cout << "Temps ecoule : " << totalTime << " ms." << std::endl;

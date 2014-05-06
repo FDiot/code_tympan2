@@ -28,7 +28,6 @@
 #include "Tympan/MetierSolver/DataManagerMetier/Site/TYSiteNode.h"
 
 #define DEFAULT_SOLVER_UUID "{A98B320C-44C4-47a9-B689-1DD352DAA8B2}"
-#define SIMPLERAY_SOLVER_UUID "{EDA31C0D-5001-40e2-B36E-C29B66950197}"
 
 namespace tympan
 {
@@ -46,9 +45,6 @@ public:
     ///////////////
     //  Getters  //
     ///////////////
-
-    //! Get the pointer to the current project.
-    LPTYProjet getProject() const { return _project; }
 
     //! Get the list of available computations (i.e. \c TYCalcul).
     TYTabLPCalcul getComputationList() const { return _project->getListCalcul(); }
@@ -75,13 +71,6 @@ public:
        Default Solver.
      */
     void launchDefault(const char* directory) const;
-
-    //! Launch the computation with the SimpleRaySolver.
-    /*!
-      \param directory Directory where there is the plugin related to the
-       SimpleRay solver.
-     */
-    void launchSimpleRay(const char* directory) const;
 
     ///////////////
     //  Setters  //

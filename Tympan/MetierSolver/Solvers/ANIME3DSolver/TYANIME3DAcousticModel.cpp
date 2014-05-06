@@ -82,8 +82,6 @@ TYANIME3DAcousticModel::TYANIME3DAcousticModel(TYCalcul& calcul, const TYSiteNod
     _listeTerrains = _topo->getListTerrain();
     _listeTriangles = (*_topo->getAltimetrie()).getListFaces();
 
-    TYMapElementTabSources mapElementSources = calcul.getResultat()->getMapEmetteurSrcs();
-
     _c = _atmos.getVitSon();
     _K = _atmos.getKAcoust();
     _lambda = OSpectre::getLambda(_c);
@@ -114,8 +112,6 @@ void TYANIME3DAcousticModel::ComputeAbsRefl()
     TYSol* pSol = NULL;
 
     OPoint3D Prefl, Pprec, Psuiv;    //pt de reflexion, pt precedent et suivant
-
-    TYTabRayEvent events;           // liste des evenements
 
     OTabDouble tabPondFresnel;      // tableau des ponderations de Fresnel
     TYTabPoint3D triangleCentre;    // Contains all triangles centres
@@ -552,7 +548,7 @@ OTabDouble TYANIME3DAcousticModel::ComputeFresnelWeighting(double angle, OPoint3
 
     // We get back the points inside the zone
     TYTabPoint pointsInside;
-    int nbPts = _alti->getPointsInBox(eProj, fProj, gProj, hProj, pointsInside);
+    _alti->getPointsInBox(eProj, fProj, gProj, hProj, pointsInside);
 
     // We create a tabPoint containing all the points : pointsInside the zone + projection
     TYTabPoint ptsTriangulation = pointsInside;
@@ -569,7 +565,6 @@ OTabDouble TYANIME3DAcousticModel::ComputeFresnelWeighting(double angle, OPoint3
 
     // We wanna get each triangle centre in order to know the ground type under the centre
     // Then we get the triangle surface and compute fresnel weighting
-    double trSurface = 0.0;
     unsigned long nbTriangles = _oTriangles.size();
     tabPond.reserve(nbTriangles);
     tabSurface.reserve(nbTriangles);
@@ -599,7 +594,7 @@ std::vector<OTriangle> TYANIME3DAcousticModel::ComputeTriangulation(const TYTabP
 {
 
     // This function returns a vector of triangles created within the bounding box
-    unsigned int i = 0, j = 0;  // Indices needed
+    unsigned int i = 0;  // Indices needed
     ODelaunayMaker oDelaunayMaker(delaunay);
 
     // Set des vertex
@@ -652,16 +647,10 @@ void TYANIME3DAcousticModel::ComputePressionAcoustEff()
     TYSourcePonctuelle* source = NULL; // source
     OSpectreComplex prodAbs; // produit des differentes absorptions
     double totalRayLength; // Computes the total ray length including reflections only (diffractions are not included)
-    double distSR1; // Computes the distance between the source and the first reflection
-    double distToNext; // Computes the distance
-    bool reflection = false;
 
     for (int i = 0; i < _nbRays; i++) // boucle sur les rayons
     {
         totalRayLength = 0.0; // Computes the total ray length including reflections only (diffractions are not included)
-        distSR1 = 0.0; // Computes the distance between the source and the first reflection
-        distToNext = 0.0; // Computes the distance
-        reflection = false;
         source = _tabTYRays[i]->getSource();
 
         totalRayLength = _tabTYRays[i]->getLength();
@@ -728,11 +717,6 @@ OTab2DSpectreComplex TYANIME3DAcousticModel::ComputePressionAcoustTotalLevel()
             {
                 source = _tabTYRays[k]->getSource();
                 recept = _tabTYRays[k]->getRecepteur();
-
-#ifdef _DEBUG
-                TYElement* pTmpSource = _tabSources[i]->getElement();
-                TYElement* pTmpRecept = _tabRecepteurs[j]->getElement();
-#endif
 
                 // test si la source est celle en cours idem pour recepteur
                 if (source == (TYSourcePonctuelle*)(_tabSources[i]->getElement()) && recept == (TYPointCalcul*)(_tabRecepteurs[j]->getElement()))

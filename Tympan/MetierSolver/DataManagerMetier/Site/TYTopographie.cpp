@@ -775,7 +775,6 @@ bool TYTopographie::remTerrain(const LPTYTerrainGeoNode pTerGeoNode)
     unsigned int terrainNbr = 0;
 
     TYTabTerrainGeoNode::iterator ite;
-    TYTerrain* pTerrain = dynamic_cast<TYTerrain*>(pTerGeoNode->getElement());
 
     for (ite = _listTerrain.begin(); ite != _listTerrain.end(); ite++)
     {
@@ -1261,7 +1260,6 @@ LPTYTerrain TYTopographie::solMoy(const OSegment3D& seg, const TYAtmosphere& atm
 
     pTerrain->setSol(pSolRes);
 
-
     return pTerrain;
 }
 
@@ -1439,31 +1437,6 @@ TYTabStructSegPtrTer TYTopographie::sols(const OSegment3D& seg)
     }
 
     return tabPtrTerSeg;
-}
-
-bool TYTopographie::hauteurFromPenteMoy(const OPoint3D& pt, const OSegment3D& seg, double& hauteur) const
-{
-    bool res = false;
-    OSegment3D pente;
-    OPoint3D ptSym;
-
-    if (penteMoy(seg, pente)) // Si pente moyenne calculable on l'utilise
-    {
-        res = true;
-
-        OGeometrie::symPointDroite(pente._ptA, pente._ptB, pt, ptSym);
-
-        // Definition du vecteur AB
-        OVector3D vect(pt, ptSym);
-
-        hauteur = vect.norme() / 2;
-    }
-    else // Sinon on renvoit la hauteur (deja connue) du point.
-    {
-        hauteur = pt._z;
-    }
-
-    return res;
 }
 
 void TYTopographie::updateSol(const TYAtmosphere& atmo)

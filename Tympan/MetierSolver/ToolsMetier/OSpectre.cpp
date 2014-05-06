@@ -20,15 +20,11 @@
 
 
 
-#ifdef TYMPAN_USE_PRECOMPILED_HEADER
-#include "Tympan/MetierSolver/DataManagerMetier/TYPHMetier.h"
-#endif // TYMPAN_USE_PRECOMPILED_HEADER
+#include "OSpectre.h"
 
 #undef min // Something defines a min macro on windows, which breaks std::min
 
 #include <algorithm>
-
-#include "Tympan/Tools/OMessageManager.h"
 
 // Frequence de travail minimale
 float OSpectre::_fMin = 16;
@@ -82,7 +78,7 @@ OSpectre::OSpectre(const double* valeurs, unsigned nbVal, unsigned decalage)
         _module[i] = _defaultValue;
     }
 
-    unsigned int maxInd = (unsigned int)(nbVal + decalage) < TY_SPECTRE_DEFAULT_NB_ELMT ? nbVal : TY_SPECTRE_DEFAULT_NB_ELMT;
+    unsigned int maxInd = std::min(nbVal + decalage , TY_SPECTRE_DEFAULT_NB_ELMT);
     for (i = decalage ; i < maxInd; i++)
     {
         _module[i] = valeurs[i - decalage];
@@ -420,38 +416,6 @@ OSpectre OSpectre::subst(const double& valeur) const
     return s;
 }
 
-OSpectre OSpectre::substdB(const OSpectre& spectre) const
-{
-    OSpectre s;
-
-    OSpectre tempoS1(this->toGPhy());
-    OSpectre tempoS2(spectre.toGPhy());
-
-    // Calcul de la somme energetique
-    double tempVal;
-
-    for (unsigned int i = 0; i < s.getNbValues(); i++)
-    {
-        tempVal = tempoS1._module[i] - tempoS2._module[i];
-
-        if (tempVal <= 0)
-        {
-            s._module[i] = 1e-20;
-            s._valid = false ;
-            continue;
-        }
-
-        s._module[i] = tempVal;
-    }
-
-    s._type = _type;
-    s._etat = SPECTRE_ETAT_LIN;
-
-    //  s = s.toDB();
-
-    return s.toDB();
-}
-
 OSpectre OSpectre::mult(const OSpectre& spectre) const
 {
     OSpectre s;
@@ -612,21 +576,6 @@ OSpectre OSpectre::log(const double& base) const
     return s;
 }
 
-OSpectre OSpectre::tenPow() const
-{
-    OSpectre  s;
-
-    // Recopie de l'empreinte du spectre
-    s._etat = _etat; s._type = _type;
-
-    for (unsigned int i = 0 ; i < TY_SPECTRE_DEFAULT_NB_ELMT ; i++)
-    {
-        s._module[i] = pow(10.0, this->_module[i]);
-    }
-
-    return s;
-}
-
 OSpectre OSpectre::racine() const
 {
     OSpectre s;
@@ -694,11 +643,6 @@ OSpectre OSpectre::cos() const
     return s;
 }
 
-OSpectre OSpectre::tan() const
-{
-    return this->sin().div(this->cos());
-}
-
 OSpectre OSpectre::abs() const
 {
     OSpectre s;
@@ -735,7 +679,7 @@ double OSpectre::valMax()
 
     for (unsigned int i = 0; i < TY_SPECTRE_DEFAULT_NB_ELMT; i++)
     {
-        result = max(this->_module[i], result);
+        result = std::max(this->_module[i], result);
     }
 
     return result;
@@ -999,4 +943,155 @@ unsigned int OSpectre::getNbValues()const
     }
 
     return nbFreq;
+}
+
+OSpectre OSpectre::makeOctSpect()
+{
+    OSpectre s;
+    s._form = SPECTRE_FORM_OCT;
+
+    return s;
+}
+
+OSpectre OSpectre::toTOct() const
+{
+    OSpectre s = getEmptyLinSpectre();
+
+    if (_form == SPECTRE_FORM_TIERS) // Si on est deja en tiers d'octave
+    {
+        s = *this;
+        return s;
+    }
+    else if (_form != SPECTRE_FORM_OCT) // Si le spectre n'est pas en octave
+    {
+        s._valid = false;
+        return s;
+    }
+
+    s._type = _type;
+
+    if (_type != SPECTRE_TYPE_ABSO)
+    {
+        OSpectre travail = this->toGPhy();
+
+        short indice = 2;
+        short nbOctValue = 9;
+
+        double valeur = 0.0;
+        double coef = 3.0;
+
+        if (_type == SPECTRE_TYPE_ATT) { coef = 1.0; }
+
+        for (short i = 0 ; i < nbOctValue ; i++, indice += 3)
+        {
+            valeur = travail._module[i] / coef;
+
+            s._module[indice] = valeur;
+            s._module[indice + 1] = valeur;
+            s._module[indice + 2] = valeur;
+        }
+
+        if (_type == SPECTRE_TYPE_ATT)
+        {
+            s._module[0]  = 1;
+            s._module[1]  = 1;
+            s._module[29] = 1;
+            s._module[30] = 1;
+        }
+
+        s = s.toDB();
+    }
+    else
+    {
+        OSpectre travail = *this;
+
+        short indice = 2;
+        short nbOctValue = 9;
+
+        double valeur = 0.0;
+
+        for (short i = 0 ; i < nbOctValue ; i++, indice += 3)
+        {
+            valeur = travail._module[i];
+
+            s._module[indice] = valeur;
+            s._module[indice + 1] = valeur;
+            s._module[indice + 2] = valeur;
+        }
+
+        s._module[0]  = 1;
+        s._module[1]  = 1;
+        s._module[29] = 1;
+        s._module[30] = 1;
+
+        s._etat = SPECTRE_ETAT_DB;
+    }
+
+    s._form = SPECTRE_FORM_TIERS; // indication explicite de la forme tiers d'octave
+
+    return s;
+}
+
+OSpectre OSpectre::toOct() const
+{
+    OSpectre s = makeOctSpect();
+
+    if (_form == SPECTRE_FORM_OCT)  // Si le spectre est deja en octave
+    {
+        s = *this;
+        return s;
+    }
+    else if (_form != SPECTRE_FORM_TIERS)  // Si le spectre n'est pas en tiers d'octave
+    {
+        s._valid = false;
+        return s;
+    }
+
+    s._etat = SPECTRE_ETAT_LIN; // s aussi est en lin a ce moment
+    s._type = _type;
+
+    if (_type != SPECTRE_TYPE_ABSO)
+    {
+        OSpectre travail = this->toGPhy();
+
+        unsigned int indiceDepart = 2;
+        unsigned int indice = 0;
+
+        double valeur = 0.0;
+        double coef = 1.0;
+
+        if (_type == SPECTRE_TYPE_ATT) { coef = 3.0; }
+
+        for (unsigned int i = indiceDepart ; i < TY_SPECTRE_DEFAULT_NB_ELMT - 2 ; i += 3, indice++)
+        {
+            valeur = (travail._module[i] + travail._module[i + 1] + travail._module[i + 2]) / coef;
+
+            s._module[indice] = valeur;
+        }
+
+        s = s.toDB();
+    }
+    else
+    {
+        OSpectre travail = *this;
+
+        unsigned int indiceDepart = 2;
+        unsigned int indice = 0;
+
+        double valeur = 0.0;
+
+        for (unsigned int i = indiceDepart ; i < TY_SPECTRE_DEFAULT_NB_ELMT - 2 ; i += 3, indice++)
+        {
+            valeur = (travail._module[i] + travail._module[i + 1] + travail._module[i + 2]) / 3; // Moyenne des absos
+
+            s._module[indice] = valeur;
+        }
+
+        s._etat = SPECTRE_ETAT_DB;
+    }
+
+    s._form = SPECTRE_FORM_OCT; // indication explicite de la forme octave
+
+    return s;
+
 }

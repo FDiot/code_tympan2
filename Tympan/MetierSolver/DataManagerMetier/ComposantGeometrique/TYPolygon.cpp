@@ -27,6 +27,7 @@
 #endif // TYMPAN_USE_PRECOMPILED_HEADER
 
 #include "Tympan/MetierSolver/ToolsMetier/OSegment3D.h"
+#include "Tympan/MetierSolver/ToolsMetier/Defines.h"
 #include "TYRectangle.h"
 #include "TYPolygon.h"
 #include "Tympan/MetierSolver/DataManagerCore/TYPreferenceManager.h"
@@ -327,7 +328,6 @@ int TYPolygon::intersects(const OPoint3D& pt) const
         if (max_normal < normale[2])
         {
             max_axe = 2;
-            max_normal = normale[2];
         }
         switch (max_axe)
         {
@@ -383,8 +383,6 @@ int TYPolygon::intersects(const OPoint3D& pt) const
 
 void TYPolygon::setPoints(const TYTabPoint& pts)
 {
-    size_t nbPts = pts.size();
-    //assert(nbPts>2);
     _pts = pts;
     //assert(checkCoplanar());
     _bConvex = false;
@@ -426,9 +424,9 @@ bool TYPolygon::isValid() const
     OMsg::msgToDo("TYPolygon::isValid");
     bool res = false;
 
+#if TY_USE_IHM
     double seuilConfondus = TYSEUILCONFONDUS;
 
-#if TY_USE_IHM
     if (TYPreferenceManager::exists(TYDIRPREFERENCEMANAGER, "SeuilConfondus"))
     {
         seuilConfondus = TYPreferenceManager::getDouble(TYDIRPREFERENCEMANAGER, "SeuilConfondus");

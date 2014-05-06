@@ -153,7 +153,6 @@ int TYDXFImporter::Get3DPointsInLayer(const dimeModel* model, const char* LayerN
                 dxfdouble thickness;
                 dimeEntity::GeometryType TheGeometryType = pdimeEntity->extractGeometry(verts, indices, extrusionDir, thickness);
 
-                TYTabPoint CurrentPolyline;
                 int j = 0;
                 verts[j].x -= 0;//test Offset.x;
                 verts[j].y -= 0;//test Offset.y;
@@ -422,8 +421,6 @@ void TYDXFImporter::SetName(LPTYElement pTYElement, const char* sName, int nInst
 {
     static char sInstanceName[1024];
     sprintf(sInstanceName, "%s#%d", sName, nInstanceNumber);
-    std::string Name;
-    Name = sInstanceName;
     pTYElement->setName(sName);
 }
 

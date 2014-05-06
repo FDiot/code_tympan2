@@ -118,7 +118,7 @@ public:
      *
      * @param epaisseur Double indiquant l'epaisseur totale de l'obstacle.
      *
-     * @return Un LPTYSpectre donnant le coefficient de correction pour chacune des frequences.
+     * @return Un OSpectre donnant le coefficient de correction pour chacune des frequences.
      */
     OSpectre calculC(const double& epaisseur) const;
 
@@ -129,7 +129,6 @@ public:
      * @param penteMoyenne la pente moyenne entre la source et le recepteur
      * @param miroir indique s'il faut utiliser le source (false) ou son image (true) dans le calcul de la difference de marche
      * @param re Longueur du chemin a prendre en compte.
-     * @param Atmo Un LPTYSpectre qui represente le facteur de correction lie a l'epaisseur de l'ecran.
      * @param epaisseur, double indiquant l'epaisseur totale de l'obstacle.
      * @param vertical, booleen qui indique que l'on traite le plan vertical (attenuation maximale limitee)
      * @param bDiffOk est mis a false par la fonction si la difference de marche est <=0
@@ -149,23 +148,12 @@ public:
      *
      * @param ptDebut Point de depart.
      * @param ptFin Point d'arrivee.
-     * @param Atmo atmosphere courante.
      * @param pEtapes Tableau des etapes calculees.
      *
      * @return bool <code>true</code> si le calcul est juste;
      *              <code>false</code> sinon.
      */
     bool addEtapesSol(const OPoint3D& ptDebut, const OPoint3D& ptFin, const OSegment3D& penteMoyenne, const TYSourcePonctuelleGeoNode* pSrcGeoNode, const bool& fromSource, const bool& toRecepteur, TYTabEtape& Etapes, double& longueur) const;
-
-    /**
-     * Ajoute les chemins calcules au tableau des chemins du trajet
-     */
-    void addCheminToTrajet(const TYTabChemin& TabChemin, TYTrajet& trajet) const;
-
-    /**
-     *
-     */
-    void addCheminDirectToTrajet(const TYTabChemin& TabChemin, TYTrajet& trajet) const;
 
     /**
      * Ajoute le trajet direct a chacun des chemins.

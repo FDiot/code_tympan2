@@ -763,7 +763,6 @@ void TYPickEditor::showPopupMenu(std::shared_ptr<LPTYElementArray> pElts)
             else if (pElts->at(retCodes[popupRet])->isA("TYRectangularMaillage"))
             {
                 TYRectangularMaillage* pRectMaillage = (LPTYRectangularMaillage&) pElts->at(retCodes[popupRet]);
-                LPTYElementGraphic pMGr = pRectMaillage->getGraphicObject();
                 pRectMaillage->updateGraphic();
                 bUpdateDisplayList = true; // DT++
             }
@@ -846,7 +845,6 @@ void TYPickEditor::showPopupMenu(std::shared_ptr<LPTYElementArray> pElts)
         else if (pElts->at(retCodes[popupRet])->isA("TYRectangularMaillage"))
         {
             TYRectangularMaillage* pRectMaillage = (LPTYRectangularMaillage&) pElts->at(retCodes[popupRet]);
-            LPTYElementGraphic pMGr = pRectMaillage->getGraphicObject();
             pRectMaillage->updateGraphic();
         }
         else
@@ -1706,9 +1704,9 @@ void TYPickEditor::showRotationDialog(TYGeometryNode* pGeoNode)
                 dRotateZ -= yaw;
             }
 
-            tyMatTmpX.setRotationOx(-M_PI * dRotateX / 180);
-            tyMatTmpY.setRotationOy(-M_PI * dRotateY / 180);
-            tyMatTmpZ.setRotationOz(M_PI * dRotateZ / 180);
+            tyMatTmpX.setRotationOx(-DEGTORAD(dRotateX));
+            tyMatTmpY.setRotationOy(-DEGTORAD(dRotateY));
+            tyMatTmpZ.setRotationOz(DEGTORAD(dRotateZ));
 
             if (pDlg->getConcatenateStatus()) //az--
             {
@@ -1951,7 +1949,6 @@ void TYPickEditor::showPanel(TYElement* pElt)
         }
 
         // Valeur
-        pTYElementGraphic = pMaillage->getGraphicObject();
         LPTYMaillageGeoNode pMaillageGeoNode = TYCalcul::safeDownCast(pMaillage->getParent())->findMaillage(pMaillage);
 
         // On recupere la premiere distance

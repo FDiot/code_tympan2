@@ -174,13 +174,13 @@ bool TYRay::deepCopy(TYRay* other)
     return true;
 }
 
-void TYRay::setSource(TYSourcePonctuelle* source, TYPoint& globalPosition)
+void TYRay::setSource(TYSourcePonctuelle* source, OPoint3D& globalPosition)
 {
     _source = source;
     _posSourceGlobal = globalPosition;
 }
 
-void TYRay::setRecepteur(TYPointCalcul* recep, TYPoint& globalPosition)
+void TYRay::setRecepteur(TYPointCalcul* recep, OPoint3D& globalPosition)
 {
     _recepteur = recep;
     _posReceptGlobal = globalPosition;
@@ -204,17 +204,6 @@ int TYRay::getNbrDiffractions()
         if (_events[i]->type == TYDIFFRACTION) { nbrDiff++; }
 
     return nbrDiff;
-}
-
-double TYRay::getDistanceSR() const
-{
-    const OPoint3D S = *_source->getPos(); // coordonnees de la source
-
-    double coord[3];
-    _recepteur->getCoords(coord);
-    const OPoint3D R = OPoint3D(coord); // coordonnees du recepteur
-
-    return S.distFrom(R);
 }
 
 double TYRay::getLength()
@@ -297,7 +286,7 @@ void TYRay::overSample(const double& dMin)
 {
     if (dMin == 0.) { return; }
 
-    TYTabPoint tabPoints;
+    TabPoint3D tabPoints;
     TYRayEvent* rayEvent = NULL;
 
     // Gestion des iterateurs
@@ -311,7 +300,7 @@ void TYRay::overSample(const double& dMin)
         tabPoints.push_back((*(iter + 1))->pos);
 
         // Surechantillonnage du tableau de points
-        tabPoints = TYPoint::checkPointsMaxDistance(tabPoints, dMin);
+        tabPoints = OPoint3D::checkPointsMaxDistance(tabPoints, dMin);
 
         // Insertion des points sous forme d'evenement au tableau des evenements
         TYTabRayEvent::iterator iter2 = iter + 1;

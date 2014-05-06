@@ -632,8 +632,6 @@ OPoint3D TYAltimetrie::projection(const OPoint3D& pt) const
         return ptTest;
     }
 
-    int i = 0;
-    int size = 0;
     OSegment3D segTest;
     TYPolygon* pFace = NULL;
     TYTabLPPolygon& divRef = _pSortedFaces[idx.pi][idx.qi];
@@ -724,32 +722,6 @@ double TYAltimetrie::PremiereHauteurPositiveOuNulle(TYTabPoint& ptsIn)
         return 0;
     }
     return dHauteur;
-}
-
-TYTabPoint TYAltimetrie::altSup(const TYPoint& pt) const
-{
-    TYTabPoint tabPoint;
-    size_t numFaces = _listFaces.size();
-    LPTYPolygon pFace = NULL;
-
-    OMsg::msgToDo("TYAltimetrie::altSup, Eliminer les pts en doublons...");
-
-    for (int i = 0; i < numFaces; i++)
-    {
-        pFace = _listFaces.at(i);
-
-        for (int j = 0; j < pFace->getNbPts(); i++)
-        {
-            OPoint3D point = pFace->getPoint(j);
-
-            if (point._z > pt._z)
-            {
-                tabPoint.push_back(point);
-            }
-        }
-    }
-
-    return tabPoint;
 }
 
 void TYAltimetrie::initNullGrid()

@@ -31,6 +31,7 @@
 
 #include "Tympan/Tools/OMessageManager.h"
 
+#include "Tympan/MetierSolver/ToolsMetier/Defines.h"
 
 OPROTOINST(TYSegment);
 TY_EXTENSION_INST(TYSegment);
@@ -271,16 +272,6 @@ TYPoint TYSegment::centerOfCurvedPath(const double& R) const
 
     point.setCoords(x, y, z);
     return point;
-}
-
-double TYSegment::topOfCurvedPath(const double& R) const
-{
-    double top;
-    double demiLongueur = longueur() / 2;
-
-    top = R - sqrt(R * R - demiLongueur * demiLongueur);
-
-    return top;
 }
 
 double TYSegment::lengthOfCurvedPath(const double& R)

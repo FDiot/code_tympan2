@@ -39,6 +39,7 @@
 #include <string>
 #include <fstream>
 #include <iomanip>
+#include <QString>
 
 /**
  * Declarations des types utilises par les methodes virtuelle d'extension
@@ -420,9 +421,6 @@ typedef std::vector<OSegment3D> TYTabSegment3D;
 ////////////////////////////////////////////////////////////////////////////////
 // Defines
 ////////////////////////////////////////////////////////////////////////////////
-
-///Seuil en metres a partir duquel 2 elements sont consideres comme confondus.
-#define TYSEUILCONFONDUS        0.01        // 1 cm
 
 ///Precision pour la representation des cercles par des segments.
 #define TYPRECISIONCIRCLE       0.1

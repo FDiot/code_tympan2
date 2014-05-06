@@ -29,6 +29,7 @@
 #include "TYEtage.h"
 
 #include "Tympan/MetierSolver/ToolsMetier/OSegment3D.h"
+#include "Tympan/MetierSolver/ToolsMetier/Defines.h"
 
 #include "Tympan/Tools/OMessageManager.h"
 
@@ -273,7 +274,6 @@ DOM_Element TYEtage::toXML(DOM_Element& domElement)
     DOM_Element listEtatNode = domDoc.createElement("TabEtatElement");
     domNewElem.appendChild(listEtatNode);
 
-    unsigned int test = static_cast<unsigned int>(_tabRegimes.size());
     // Pour tous les regimes
     for (i = 0 ; i < _tabRegimes.size() ; i++)
     {
@@ -831,7 +831,7 @@ void TYEtage::remMurs()
 
 bool TYEtage::setMurs(const TYTabPoint& tabPts, double hauteur /*=2.0*/, bool close /*=true*/)
 {
-    TYPoint pt0, pt1, pt2, pt3;
+    TYPoint pt0, pt1;
     size_t count = tabPts.size();
     TYRepere repMur;
 
@@ -869,8 +869,8 @@ bool TYEtage::setMurs(const TYTabPoint& tabPts, double hauteur /*=2.0*/, bool cl
     // Une face pour chaque couple de points qui se suivent
     for (int i = 0; i < count; i++)
     {
-        pt1 = pt2 = tabPts[i];
-        pt0 = pt3 = tabPts[(i + 1) % tabPts.size()];
+        pt1 = tabPts[i];
+        pt0 = tabPts[(i + 1) % tabPts.size()];
 
         // Vecteur pour la "longueur" de la face
         OVector3D vec01(pt0, pt1);
@@ -2184,17 +2184,6 @@ void TYEtage::calculTempsReverb()
 
     _TR.setType(SPECTRE_TYPE_AUTRE); // unite = secondes
     _TR.setEtat(SPECTRE_ETAT_DB); // Pour eviter une transformation non souhaitee
-}
-
-double TYEtage::coeffTransmFrom(const TYSourcePonctuelle* pSrcPonct) const
-{
-    assert(pSrcPonct);
-    TYAcousticSurface* pAccSurf = (TYAcousticSurface*) pSrcPonct->getParent();
-    assert(pAccSurf);
-    LPTYMateriauConstruction pMat = pAccSurf->getMateriau();
-    TYSpectre spectre = pMat->getSpectreTransm();
-
-    return 0;
 }
 
 void TYEtage::updateSolPlafond()
