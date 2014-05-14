@@ -28,7 +28,6 @@
 #define __TY_APPLICATION__
 
 #include <qapplication.h>
-#include "Tympan/Tools/TYConfigure.h"
 
 #include "TYAppDefines.h"
 #include "TYCalculManager.h"
@@ -223,6 +222,9 @@ private :
     bool loadSettings();
     bool createCacheDir();
     bool createWorkDir();
+
+public:
+    QString _binaryDir;
 
 private:
     ///Chemin d'origine de l'application.

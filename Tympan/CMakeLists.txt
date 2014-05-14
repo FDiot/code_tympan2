@@ -41,6 +41,13 @@ configure_file(
   ${CMAKE_CURRENT_BINARY_DIR}/TYVersion.h
   @ONLY
 )
+set(PYMODULES_DIR "pymodules")
+set(PYSCRIPT "${PYMODULES_DIR}/tympan.py")
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/Config.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/Config.h
+  @ONLY
+  )
 include_directories(${CMAKE_BINARY_DIR})
 
 ### Setting sub-directories and modules up ###
@@ -48,7 +55,7 @@ set(CURRENT_FOLDER "Tympan")
 
 # The Tympan components must be enumerated here in reverse depence order
 set(TYMPAN_MODULES  tympan_dm_metier tympan_dm_graphics tympan_dm_ihm tympan_dm_core
-		    tympan_tools_metier tympan_tools_graphics
+		    tympan_tools_metier tympan_common_tools tympan_tools_graphics
 		    tympan_tools
 )
 
