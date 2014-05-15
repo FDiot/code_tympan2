@@ -29,7 +29,6 @@
 #include "Tympan/Tools/OMessageManager.h"
 #include "Tympan/Tools/TYProgressManager.h"
 
-
 OPROTOINST(TYAcousticCylinder);
 TY_EXTENSION_INST(TYAcousticCylinder);
 TY_EXT_GRAPHIC_INST(TYAcousticCylinder);
@@ -609,13 +608,11 @@ int TYAcousticCylinder::isInside(const TYPoint& pt) const
     // entre les plan haut et bas du cylindre (boi申te englobante)
 
     // Obtention de la matrice de changement de repere
-    TYRepere repere = _pCircBottom->getShape()->getRepere();
+    ORepere3D repere = _pCircBottom->getShape()->getORepere3D();
     repere._origin = getCenter();
-    OMatrix matrix;
-    repere.getMatChangeRep(matrix);
 
     // On passe dans le repere du cylindre pour travailler en 2D
-    OPoint3D ptCopy = matrix * pt;
+    OPoint3D ptCopy = repere.asMatrix() * pt;
 
     // Test Xi申 + Yi申 <= Ri申
     double rayon = getDiameter() / 2.0;

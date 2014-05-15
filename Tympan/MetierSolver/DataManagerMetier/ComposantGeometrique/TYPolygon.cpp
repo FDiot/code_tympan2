@@ -26,8 +26,8 @@
 #include "Tympan/MetierSolver/DataManagerMetier/TYPHMetier.h"
 #endif // TYMPAN_USE_PRECOMPILED_HEADER
 
-#include "Tympan/MetierSolver/ToolsMetier/OSegment3D.h"
-#include "Tympan/MetierSolver/ToolsMetier/Defines.h"
+#include "Tympan/MetierSolver/CommonTools/OSegment3D.h"
+#include "Tympan/MetierSolver/CommonTools/Defines.h"
 #include "TYRectangle.h"
 #include "TYPolygon.h"
 #include "Tympan/MetierSolver/DataManagerCore/TYPreferenceManager.h"
@@ -40,7 +40,7 @@
 
 
 #if TY_USE_IHM
-#include "Tympan/MetierSolver/ToolsMetier/ODelaunayMaker.h"
+#include "Tympan/MetierSolver/CommonTools/ODelaunayMaker.h"
 #endif // TY_USE_IHM
 
 
@@ -441,7 +441,7 @@ bool TYPolygon::isValid() const
     return res;
 }
 
-ORepere3D TYPolygon::getRepere() const
+ORepere3D TYPolygon::getORepere3D() const
 {
     ORepere3D res;
 
@@ -480,11 +480,7 @@ TYRectangle TYPolygon::getBoundingRect() const
     // Changement de repere
     OMatrix matrix;
 
-    if (!getRepere().getMatChangeRep(matrix))
-    {
-        return BoundingRect;
-    }
-
+    matrix = getORepere3D().asMatrix();
     matrix.invert();
 
     // Init

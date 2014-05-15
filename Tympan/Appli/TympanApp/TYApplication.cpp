@@ -171,7 +171,7 @@ void TYApplication::setCurrentDirName(const QString& newValue)
 
 
 TYApplication::TYApplication(int& argc, char** argv)
-    : QApplication(argc, argv), _actionManager(10)
+    : QApplication(argc, argv), _actionManager(10), _binaryDir(applicationDirPath())
 {
     _pSplash = NULL;
     _pMainWnd = NULL;
@@ -179,6 +179,20 @@ TYApplication::TYApplication(int& argc, char** argv)
     _pCurSiteNode = NULL;
     _pCalculManager = NULL;
     _saved = false;
+    QStringList args = this->arguments();
+    if (args.count() > 1)
+    {
+        // We want to solve the acoustic problems using the legacy version of
+        // Tympan (no python/cython used)
+        if (args.contains("--legacy-computation"))
+        {
+            _usePython = false;
+        }
+        else
+        {
+            _usePython = true;
+        }
+    }
 }
 
 TYApplication::~TYApplication()

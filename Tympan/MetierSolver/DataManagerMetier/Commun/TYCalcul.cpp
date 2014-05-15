@@ -50,7 +50,7 @@ static char THIS_FILE[] = __FILE__;
 #include "Tympan/MetierSolver/DataManagerCore/TYXMLManager.h"
 #include "Tympan/MetierSolver/DataManagerCore/TYPluginManager.h"
 
-#include "Tympan/MetierSolver/ToolsMetier/Defines.h"
+#include "Tympan/MetierSolver/CommonTools/Defines.h"
 
 OPROTOINST(TYCalcul);
 TY_EXTENSION_INST(TYCalcul);
@@ -1206,7 +1206,7 @@ bool TYCalcul::updateAltiMaillage(TYMaillageGeoNode* pMaillageGeoNode, const TYA
     else // Cas des maillages verticaux
     {
         // Init
-        pt = pMaillageGeoNode->getRepere()._origin;
+        pt = pMaillageGeoNode->getORepere3D()._origin;
         pt._z = 0.0;
 
         // Recherche de l'altitude
@@ -1221,7 +1221,7 @@ bool TYCalcul::updateAltiMaillage(TYMaillageGeoNode* pMaillageGeoNode, const TYA
             pt._z += ((TYRectangularMaillage*) pMaillage)->getRectangle()->getSizeY() / 2.0;
         }
 
-        ORepere3D repere = pMaillageGeoNode->getRepere();
+        ORepere3D repere = pMaillageGeoNode->getORepere3D();
         // On assigne la nouvelle altitude
         repere._origin._z = pt._z;
         pMaillageGeoNode->setRepere(repere);

@@ -25,8 +25,8 @@
 #ifdef TYMPAN_USE_PRECOMPILED_HEADER
 #include "Tympan/MetierSolver/DataManagerMetier/TYPHMetier.h"
 #endif // TYMPAN_USE_PRECOMPILED_HEADER
-#include "Tympan/MetierSolver/ToolsMetier/OPoint3D.h"
-#include "Tympan/MetierSolver/ToolsMetier/OSegment3D.h"
+#include "Tympan/MetierSolver/CommonTools/OPoint3D.h"
+#include "Tympan/MetierSolver/CommonTools/OSegment3D.h"
 
 #include "Tympan/Tools/TYProgressManager.h"
 
@@ -158,11 +158,11 @@ void TYAcousticCircle::distriSrcs()
     double posCercle = distRayon;
 
     // On recupere le repere local au plan du cercle
-    TYRepere repere = _pBoundingRect->getRepere();
+    ORepere3D repere = _pBoundingRect->getORepere3D();
     // On place l'origine au centre du cercle pour simplifier les calculs
     repere._origin = getCenter();
     // Matrice de changement de repere
-    repere.getMatChangeRep(matrix);
+    matrix = repere.asMatrix();
 
     // On ajoute une source au centre dans tous les cas, on s'assure ainsi
     // d'avoir toujours au moins une source sur la surface si les densites
@@ -253,13 +253,13 @@ TYTabPoint TYAcousticCircle::getContour(int n /*=-1*/) const
     double rayon = getDiameter() / 2.0;
 
     // On recupere le repere local au plan du cercle
-    TYRepere repere = _pBoundingRect->getRepere();
+    ORepere3D repere = _pBoundingRect->getORepere3D();
 
     // On place l'origine au centre du cercle pour simplifier les calculs
     repere._origin = getCenter();
 
     // Matrice de changement de repere
-    repere.getMatChangeRep(matrix);
+    matrix = repere.asMatrix();
 
     // On connait la taille du tableau de point a retourner
     tab.reserve(n);
@@ -311,13 +311,13 @@ TYTabPoint3D TYAcousticCircle::getOContour(int n) const
     double rayon = getDiameter() / 2.0;
 
     // On recupere le repere local au plan du cercle
-    ORepere3D repere = _pBoundingRect->getRepere();
+    ORepere3D repere = _pBoundingRect->getORepere3D();
 
     // On place l'origine au centre du cercle pour simplifier les calculs
     repere._origin = getCenter();
 
     // Matrice de changement de repere
-    repere.getMatChangeRep(matrix);
+    matrix = repere.asMatrix();
 
     // On connait la taille du tableau de point a retourner
     //tab.reserve(n);

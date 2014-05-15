@@ -1121,7 +1121,7 @@ void TYPositionEditor::editGeoNode()
     if (_mode == Moving)
     {
         // Copie de l'ancienne pos
-        oldPos = _pEditGeoNode->getRepere()._origin;
+        oldPos = _pEditGeoNode->getORepere3D()._origin;
 
         if (_pEditGeoNode->getElement()->inherits("TYCourbeNiveau") ||
             _pEditGeoNode->getElement()->inherits("TYPlanEau"))
@@ -1129,7 +1129,7 @@ void TYPositionEditor::editGeoNode()
             enableZ = false;
         }
 
-        ORepere3D repere = _pEditGeoNode->getRepere();
+        ORepere3D repere = _pEditGeoNode->getORepere3D();
 
         // On applique le deplacement
         modified = move(&repere._origin, enableX, enableY, enableZ);//az--
@@ -1139,7 +1139,7 @@ void TYPositionEditor::editGeoNode()
     else if (_mode == Rotation)
     {
         // Copie de l'ancien repere
-        oldRepere = _pEditGeoNode->getRepere();
+        oldRepere = _pEditGeoNode->getORepere3D();
 
         if (_pEditGeoNode->getElement()->inherits("TYMaillage") ||
             _pEditGeoNode->getElement()->inherits("TYCourbeNiveau") ||
@@ -1150,7 +1150,7 @@ void TYPositionEditor::editGeoNode()
             enableY = false;
         }
 
-        ORepere3D repere = _pEditGeoNode->getRepere();
+        ORepere3D repere = _pEditGeoNode->getORepere3D();
 
         // On applique la rotation
         modified = rotate(&repere, enableX, enableY, enableZ);
@@ -1164,7 +1164,7 @@ void TYPositionEditor::editGeoNode()
         //az++
         bTYPositionEditorFirstMove = false;
         //Magouille infâme pour faire disparaitre temporairement le GeoNode car le setVisible ne marche plus vraiment
-        ORepere3D repere = _pEditGeoNode->getRepere();
+        ORepere3D repere = _pEditGeoNode->getORepere3D();
         ORepere3D AlOuest;
         AlOuest._origin = OPoint3D(999999, 999999, 999999);
         _pEditGeoNode->setRepere(AlOuest);
@@ -1180,24 +1180,24 @@ void TYPositionEditor::editGeoNode()
         {
             if (_firstCall)
             {
-                _pLastAction = new TYMoveGeoNodeAction(_pEditGeoNode, oldPos, _pEditGeoNode->getRepere()._origin, _pModeler, TR("id_action_movegeonode"));
+                _pLastAction = new TYMoveGeoNodeAction(_pEditGeoNode, oldPos, _pEditGeoNode->getORepere3D()._origin, _pModeler, TR("id_action_movegeonode"));
                 _firstCall = false;
             }
             else
             {
-                ((TYMoveGeoNodeAction*) _pLastAction)->setNewPos(_pEditGeoNode->getRepere()._origin);
+                ((TYMoveGeoNodeAction*) _pLastAction)->setNewPos(_pEditGeoNode->getORepere3D()._origin);
             }
         }
         else if (_mode == Rotation)
         {
             if (_firstCall)
             {
-                _pLastAction = new TYRotateGeoNodeAction(_pEditGeoNode, oldRepere, _pEditGeoNode->getRepere(), _pModeler, TR("id_action_rotategeonode"));
+                _pLastAction = new TYRotateGeoNodeAction(_pEditGeoNode, oldRepere, _pEditGeoNode->getORepere3D(), _pModeler, TR("id_action_rotategeonode"));
                 _firstCall = false;
             }
             else
             {
-                ((TYRotateGeoNodeAction*) _pLastAction)->setNewRepere(_pEditGeoNode->getRepere());
+                ((TYRotateGeoNodeAction*) _pLastAction)->setNewRepere(_pEditGeoNode->getORepere3D());
             }
         }
 
@@ -1538,7 +1538,6 @@ bool TYPositionEditor::rotate(ORepere3D* pRepere, bool enableX /*=true*/, bool e
         OMatrix tyMatTmpX;
         OMatrix tyMatTmpY;
         OMatrix tyMatTmpZ;
-        pRepere->getMatChangeRep(tyMat);
 
         double vpNormal[3];
         vpNormal[0] = _pInteractor->getRenderer()->getActiveCamera()->front.x;
@@ -1552,7 +1551,8 @@ bool TYPositionEditor::rotate(ORepere3D* pRepere, bool enableX /*=true*/, bool e
         if (vpNormal[0] != 0) { tyMatTmpX.setRotationOx(-vpNormal[0]*M_PI * angle / 180); }
         if (vpNormal[2] != 0) { tyMatTmpY.setRotationOy(vpNormal[2]*M_PI * angle / 180); }
         if (vpNormal[1] != 0) { tyMatTmpZ.setRotationOz(-vpNormal[1]*M_PI * angle / 180); }
-        tyMat = tyMat * tyMatTmpZ * tyMatTmpY * tyMatTmpX;
+
+        tyMat = pRepere->asMatrix() * tyMatTmpZ * tyMatTmpY * tyMatTmpX;
 
         OPoint3D org = pRepere->_origin; // On conserve l'origine de depart
         pRepere->set(tyMat);

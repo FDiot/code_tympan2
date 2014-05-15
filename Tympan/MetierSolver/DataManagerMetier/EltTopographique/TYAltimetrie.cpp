@@ -34,9 +34,9 @@
 #include <boost/current_function.hpp>
 #include <boost/foreach.hpp>
 
-#include "Tympan/MetierSolver/ToolsMetier/OSegment3D.h"
-#include "Tympan/MetierSolver/ToolsMetier/OBox.h"
-#include "Tympan/MetierSolver/ToolsMetier/OBox2.h"
+#include "Tympan/MetierSolver/CommonTools/OSegment3D.h"
+#include "Tympan/MetierSolver/CommonTools/OBox.h"
+#include "Tympan/MetierSolver/CommonTools/OBox2.h"
 
 #include "TYAltimetrie.h"
 #include "Tympan/MetierSolver/DataManagerMetier/ComposantGeometrique/TYSegment.h"
@@ -45,7 +45,7 @@
 #include "Tympan/Tools/TYProgressManager.h"
 #include "Tympan/Tools/OMessageManager.h"
 
-#include "Tympan/MetierSolver/ToolsMetier/ODelaunayMaker.h"
+#include "Tympan/MetierSolver/CommonTools/ODelaunayMaker.h"
 
 #if defined(WIN32)
 #include <crtdbg.h>
@@ -62,7 +62,6 @@ struct triangle
 {
     double pts[3][3];
 };
-static int compareTriangle(const void* elem1, const void* elem2);
 
 OPROTOINST(TYAltimetrie);
 TY_EXTENSION_INST(TYAltimetrie);
@@ -208,9 +207,6 @@ void TYAltimetrie::plugBackTriangulation(
         _bbox.Enlarge(oTriangle._C);
     }
 
-    // OMessageManager::get()->info("Mise a jour altimetrie (Tri des faces)...");
-    // qsort(mesh, nbTriangles, sizeof(triangle), compareTriangle);
-
     // Reset the grid to its new size
     clearAcceleratingGrid();
 
@@ -284,27 +280,6 @@ void TYAltimetrie::plugBackTriangulation(
 // The method compute is obsolete and thus commented out
 // Asignificant part of it has been moved into the plugBackTriangulation method
 // void TYAltimetrie::compute(const TYTabPoint& points, const double& delaunay)//virtual
-
-int compareTriangle(const void* elem1, const void* elem2)
-{
-    triangle* tr1 = (triangle*) elem1;
-    triangle* tr2 = (triangle*) elem2;
-
-    double x11, x12, x13, x1min; //absisse des 3 sommets du triangle 1
-    double x21, x22, x23, x2min; //absisse des 3 sommets du triangle 2
-
-    x11 = tr1->pts[0][0];
-    x12 = tr1->pts[1][0];
-    x13 = tr1->pts[2][0];
-    x21 = tr2->pts[0][0];
-    x22 = tr2->pts[1][0];
-    x23 = tr2->pts[2][0];
-
-    x1min = min(x11, min(x12, x13));
-    x2min = min(x21, min(x22, x23));
-
-    return floor(x1min - x2min);
-}
 
 bool TYAltimetrie::addFace(LPTYPolygon pFace)
 {

@@ -1,10 +1,14 @@
-import sys, os
+import os
 
 try:
+    import tympan_config_paths
     import toto
 except ImportError as exc:
     # Add information regarding PYTHONPATH to the exception
-    exc.args = exc.args + ('PYTHONPATH=%s' % os.environ.get('PYTHONPATH', ''),)
+    exc.args = exc.args + (
+        'PYTHONPATH=%s' % os.environ.get('PYTHONPATH', ''),
+        'CONFIG:%s' % (config,)
+    )
     raise
 
 

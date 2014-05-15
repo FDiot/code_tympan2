@@ -4,6 +4,8 @@ from libcpp.deque cimport deque
 from cython.operator cimport dereference as deref, preincrement as inc
 import cython
 import numpy as np
+from cython.view cimport array as cyarray
+
 
 class NullCppObject(Exception):
     """
@@ -13,6 +15,7 @@ class NullCppObject(Exception):
 @cython.locals(comp=Computation)
 def loadsolver(foldername, comp):
     load_solver(foldername, comp.thisptr.getRealPointer())
+
 
 cdef class ProblemModel:
     thisptr = cython.declare(cython.pointer(AcousticProblemModel))
@@ -52,6 +55,7 @@ cdef class ProblemModel:
             point = cython.address(self.thisptr.node(i))
             nodes[i] = [point._x, point._y, point._z]
         return (nodes, triangles)
+
 
 cdef class ResultModel:
     thisptr = cython.declare(cython.pointer(AcousticResultModel))
@@ -127,8 +131,7 @@ cdef class SolverModelBuilder:
         """ Create nodes and acoustic triangles in the model to represent the
             mesh given in argument.
         """
-        map_to_model_node_idx = cython.declare(vector[size_t])
-        map_to_model_node_idx = vector[size_t] (points.size())
+        map_to_model_node_idx = np.empty(points.size())
         itp = cython.declare(deque[OPoint3D].iterator)
         itp = points.begin()
         i = 0
@@ -216,30 +219,117 @@ cdef class Site:
         return pylist
 
 
+cdef class Result:
+    thisptr = cython.declare(SmartPtr[TYResultat])
+
+    def __cinit__(self):
+        self.thisptr = SmartPtr[TYResultat]()
+
+    def num_sources(self):
+        if self.thisptr.getRealPointer() == NULL:
+            raise NullCppObject()
+        return self.thisptr.getRealPointer().getNbOfSources()
+
+    def num_receivers(self):
+        if self.thisptr.getRealPointer() == NULL:
+            raise NullCppObject()
+        return self.thisptr.getRealPointer().getNbOfRecepteurs()
+
+    def spectrum(self, receiver, source):
+        if self.thisptr.getRealPointer() == NULL:
+            raise NullCppObject()
+        spec = Spectrum()
+        spec.thisobj = self.thisptr.getRealPointer().getSpectre(receiver, source)
+        return spec
+
+
+cdef class Spectrum:
+    thisobj = cython.declare(OSpectre)
+
+    def __cinit__(self):
+        pass
+
+    def num_values(self):
+        return self.thisobj.getNbValues()
+
+    def values(self):
+        # fixme - couldn't make it work this way (err: "cannot assign to or delete this")
+#        spec_val = cython.declare(np.ndarray, np.zeros((self.num_values(), 1),
+#                                                       dtype=np.float))
+#        (<double *> spec_val.data) = self.thisobj.getTabValReel()
+        cdef cyarray cy_array = <double[:self.num_values()]> self.thisobj.getTabValReel()
+        spec_val = np.array(cy_array, dtype=np.float32)
+        return spec_val
+
+    def toDB(self):
+        self.thisobj = self.thisobj.toDB()
+
+
 cdef class Computation:
     thisptr = cython.declare(SmartPtr[TYCalcul])
 
     def __cinit__(self):
         self.thisptr = SmartPtr[TYCalcul]()
 
+    def result(self):
+        if self.thisptr.getRealPointer() == NULL:
+            raise NullCppObject()
+        res = Result()
+        res.thisptr = self.thisptr.getRealPointer().getResultat()
+        return res
+
     def go(self):
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
         return self.thisptr.getRealPointer().go()
 
-    def problem(self):
+    def acoustic_problem(self):
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
         problem = ProblemModel()
         problem.thisptr = cython.address(self.thisptr.getRealPointer()._acousticProblem)
         return problem
 
-    def result(self):
+    def acoustic_result(self):
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
         result = ResultModel()
         result.thisptr = cython.address(self.thisptr.getRealPointer()._acousticResult)
         return result
+
+    @cython.locals(other=Computation)
+    def same_result(self, other):
+        """ Check if the result of "other" computation is equal to the result
+        of the current computation.
+        Basically the acoustic spectrums of the results are compared one by one,
+        identified by a receiver and a source id. Beforehand the spectrums are
+        set to a DB scale.
+        """
+        # Can't use operator== here since the one declared for TYResultat also
+        # compares the uuids and the pointers to the parent TYElements (which are unique)
+        # Besides, spectrum float values are compared with '==' and their definition
+        # is high --> it never matches.
+        if (self.result().num_sources() != other.result().num_sources()) or \
+           (self.result().num_receivers() != other.result().num_receivers()):
+            return False
+        for i in xrange (self.result().num_receivers()):
+            for j in xrange (self.result().num_sources()):
+                curr_spectrum = self.result().spectrum(i, j)
+                other_spectrum = other.result().spectrum(i, j)
+                # Both spectrums must have the same number of elements
+                num_elem = curr_spectrum.num_values()
+                if num_elem != other_spectrum.num_values():
+                    return False
+                # Let's compare the values in dB
+                curr_spectrum.toDB()
+                other_spectrum.toDB()
+                # Retrieve the values and put them in a numpy array
+                # There should be a more efficient or direct way to do it
+                curr_val = curr_spectrum.values()
+                other_val = other_spectrum.values()
+                if not np.allclose(curr_val, other_val, decimal=1):
+                    return False
+        return True
 
 
 cdef class Project:
@@ -265,13 +355,15 @@ cdef class Project:
     @staticmethod
     def from_xml(filepath):
         project = Project()
-        # TODO see how to convert potential C++ exception into python ones
+        # if an exception is raised from the C++ code, it will be converted to
+        # RuntimeError python exception. what() message should be preserved.
+        # see http://docs.cython.org/src/userguide/wrapping_CPlusPlus.html#exceptions
         project.thisptr = load_project(filepath)
-        if  project.thisptr.getRealPointer() != NULL:
-            return project
-        else:
-            raise Exception("Project could not be loaded from %s" % filepath)
+        return project
 
     def to_xml(self, filepath):
-        if self.thisptr.getRealPointer() != NULL:
-            save_project(filepath, self.thisptr)
+        if self.thisptr.getRealPointer() == NULL:
+            raise ValueError ("Cannot export an empty project")
+        # same thing as for load_project about the exception
+        save_project(filepath, self.thisptr)
+

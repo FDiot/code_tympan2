@@ -30,7 +30,7 @@
 
 #include "Tympan/MetierSolver/DataManagerCore/TYElement.h"
 #include "TYRepere.h"
-#include "Tympan/MetierSolver/ToolsMetier/OMatrix.h"
+#include "Tympan/MetierSolver/CommonTools/OMatrix.h"
 
 /**
  * Template pour la gestion des noeuds de geometrie.
@@ -148,10 +148,11 @@ public:
     /**
      * Set/Get du repere.
      */
-    ORepere3D getORepere3D() const
-    {
-        return _repere;
-    }
+    const ORepere3D& getORepere3D() const
+    { return _repere; }
+
+    ORepere3D& getORepere3D()
+    { return _repere; }
 
     /**
      * Set/Get du repere.
@@ -161,25 +162,12 @@ public:
     /**
      * Set/Get du repere.
      */
-    TYRepere& getRepere()
-    {
-        return _repere;
-    }
-
-    const TYRepere& getRepere() const
-    {
-        return _repere;
-    }
-
-    /**
-     * Set/Get du repere.
-     */
     void setRepere(const TYRepere& rep) { _repere = rep; }
 
     /**
      * Set/Get de la matrice de changement de repere.
      */
-    const OMatrix getMatrix() const { return _repere.asMatrix(); }
+    OMatrix getMatrix() const { return _repere.asMatrix(); }
 
     /**
      * Set/Get de la matrice de changement de repere.
@@ -269,6 +257,3 @@ protected:
 typedef SmartPtr<TYGeometryNode> LPTYGeometryNode;
 
 #endif //__TY_GEOMETRY_NODE__
-
-
-

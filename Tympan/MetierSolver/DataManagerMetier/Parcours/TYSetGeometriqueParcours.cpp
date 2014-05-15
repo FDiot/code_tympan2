@@ -29,8 +29,8 @@
 #include <math.h>
 //#include <assert.h>
 
-#include "Tympan/MetierSolver/ToolsMetier/OGeometrie.h"
-#include "Tympan/MetierSolver/ToolsMetier/OVector3D.h"
+#include "Tympan/MetierSolver/CommonTools/OGeometrie.h"
+#include "Tympan/MetierSolver/CommonTools/OVector3D.h"
 #include "Tympan/Tools/OMessageManager.h"
 
 #include "TYPointParcours.h"
@@ -447,7 +447,7 @@ void TYSetGeometriqueParcours::TriePointsIntersectionSuivantSR(TYPointParcours& 
     //TYSetGeometriqueParcours::_SrceQSort = &Srce;
     //TYSetGeometriqueParcours::_DestQSort = &Dest;
     //TYSetGeometriqueParcours::_ListePointQSort = _ListePoint;
-    qsort((void*)IndexePointsFrontiere, (size_t)NbPointsFrontiere, sizeof(int), compareAbscissesCurvilignes);
+    qsort((void*)IndexePointsFrontiere, (size_t)NbPointsFrontiere, sizeof(TYPointParcours *), compareAbscissesCurvilignes);
     //    TYSetGeometriqueParcours::_mutex.unlock();
     //qsort( void *base, size_t num, size_t width, int (__cdecl *compare )(const void *elem1, const void *elem2 ) );
 

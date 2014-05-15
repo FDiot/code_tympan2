@@ -14,8 +14,8 @@ cdef extern from "boost/shared_ptr.hpp" namespace "boost":
         T *get()
 
 cdef extern from "Tympan/MetierSolver/DataManagerMetier/xml_project_util.hpp" namespace "tympan":
-   SmartPtr[TYProjet] load_project(const char *filename)
-   void save_project(const char *filename, const SmartPtr[TYProjet] &)
+    SmartPtr[TYProjet] load_project(const char *filename) except +
+    void save_project(const char *filename, const SmartPtr[TYProjet] &) except +
 
 cdef extern from "Tympan/Tools/OGenID.h":
     cdef cppclass OGenID:
@@ -58,6 +58,30 @@ cdef extern from "Tympan/MetierSolver/DataManagerCore/TYElement.h":
         TYElement* getParent()
         OGenID getID()
 
+cdef extern from "Tympan/MetierSolver/DataManagerMetier/Commun/TYResultat.h":
+    cdef cppclass TYResultat(TYElement):
+        bool operator==(const TYResultat& other) const
+        size_t getNbOfRecepteurs() const
+        size_t getNbOfSources() const
+        OSpectre getSpectre(const int& indexRecepteur, const int& indexSource) const
+
+cdef extern from "Tympan/MetierSolver/CommonTools/OSpectre.h":
+    const unsigned int TY_SPECTRE_DEFAULT_NB_ELMT
+    cdef enum TYSpectreType:
+        SPECTRE_TYPE_ATT
+        SPECTRE_TYPE_ABSO
+        SPECTRE_TYPE_LW
+        SPECTRE_TYPE_LP
+        SPECTRE_TYPE_AUTRE
+    cdef cppclass OSpectre:
+        OSpectre()
+        bool operator==(const OSpectre& other) const
+        bool operator!=(const OSpectre& other) const
+        OSpectre toDB()
+        void setType(TYSpectreType type)
+        double * getTabValReel()
+        unsigned int getNbValues() const
+
 cdef extern from "Tympan/MetierSolver/DataManagerMetier/Site/TYSiteNode.h":
     cdef cppclass TYSiteNode (TYElement):
         void getChilds (vector[SmartPtr[TYElement]] &elts, bool recursive)
@@ -72,6 +96,7 @@ cdef extern from "Tympan/MetierSolver/DataManagerMetier/Commun/TYCalcul.h":
         bool go()
         AcousticProblemModel _acousticProblem
         AcousticResultModel _acousticResult
+        SmartPtr[TYResultat] getResultat()
 
 cdef extern from "Tympan/MetierSolver/DataManagerMetier/Commun/TYProjet.h":
     cdef cppclass TYProjet (TYElement):
@@ -91,7 +116,7 @@ cdef extern from "Tympan/MetierSolver/DataManagerMetier/ComposantGeometrique/TYG
         TYElement* getElement()
         TYGeometryNode(TYElement *)
 
-cdef extern from "Tympan/MetierSolver/ToolsMetier/OCoord3D.h":
+cdef extern from "Tympan/MetierSolver/CommonTools/OCoord3D.h":
     cdef cppclass OCoord3D:
         double _x
         double _y
@@ -99,11 +124,11 @@ cdef extern from "Tympan/MetierSolver/ToolsMetier/OCoord3D.h":
         double _value[3]
         bool operator==(const OCoord3D& coord)
 
-cdef extern from "Tympan/MetierSolver/ToolsMetier/OPoint3D.h":
+cdef extern from "Tympan/MetierSolver/CommonTools/OPoint3D.h":
     cdef cppclass OPoint3D (OCoord3D):
         pass
 
-cdef extern from "Tympan/MetierSolver/ToolsMetier/OTriangle.h":
+cdef extern from "Tympan/MetierSolver/CommonTools/OTriangle.h":
     cdef cppclass OTriangle:
         OPoint3D _A
         OPoint3D _B

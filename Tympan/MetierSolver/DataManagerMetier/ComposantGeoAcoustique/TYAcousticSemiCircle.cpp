@@ -26,15 +26,14 @@
 #include "Tympan/MetierSolver/DataManagerMetier/TYPHMetier.h"
 #endif // TYMPAN_USE_PRECOMPILED_HEADER
 
-#include "Tympan/MetierSolver/ToolsMetier/OPoint3D.h"
-#include "Tympan/MetierSolver/ToolsMetier/OSegment3D.h"
+#include "Tympan/MetierSolver/CommonTools/OPoint3D.h"
+#include "Tympan/MetierSolver/CommonTools/OSegment3D.h"
 
 #include "Tympan/MetierSolver/DataManagerMetier/ComposantGeometrique/TYGeometryNode.h"
 
 #include "Tympan/Tools/TYProgressManager.h"
 
 #include "Tympan/Tools/OMessageManager.h"
-
 
 OPROTOINST(TYAcousticSemiCircle);
 TY_EXTENSION_INST(TYAcousticSemiCircle);
@@ -159,11 +158,11 @@ void TYAcousticSemiCircle::distriSrcs()
     double posCercle = distRayon;
 
     // On recupere le repere local au plan du cercle
-    TYRepere repere = _pBoundingRect->getRepere();
+    ORepere3D repere = _pBoundingRect->getORepere3D();
     // On place l'origine au centre du cercle pour simplifier les calculs
     repere._origin = getCenter();
     // Matrice de changement de repere
-    repere.getMatChangeRep(matrix);
+    matrix = repere.asMatrix();
 
     for (int i = 0 ; i < nbSrcsRadiale ; i++)
     {
@@ -243,13 +242,13 @@ TYTabPoint TYAcousticSemiCircle::getContour(int n /*=-1*/) const
     double demiPi = M_PI / 2.0;
 
     // On recupere le repere local au plan du cercle
-    TYRepere repere = _pBoundingRect->getRepere();
+    ORepere3D repere = _pBoundingRect->getORepere3D();
 
     // On place l'origine au centre du cercle pour simplifier les calculs
     repere._origin = getCenter();
 
     // Matrice de changement de repere
-    repere.getMatChangeRep(matrix);
+    matrix = repere.asMatrix();
 
     // On connait la taille du tableau de point a retourner
     tab.reserve(n);
@@ -301,13 +300,13 @@ TYTabPoint3D TYAcousticSemiCircle::getOContour(int n /*=-1*/) const
     double demiPi = M_PI / 2.0;
 
     // On recupere le repere local au plan du cercle
-    ORepere3D repere = _pBoundingRect->getRepere();
+    ORepere3D repere = _pBoundingRect->getORepere3D();
 
     // On place l'origine au centre du cercle pour simplifier les calculs
     repere._origin = getCenter();
 
     // Matrice de changement de repere
-    repere.getMatChangeRep(matrix);
+    matrix = repere.asMatrix();
 
     // On connait la taille du tableau de point a retourner
     OPoint3D pt;
