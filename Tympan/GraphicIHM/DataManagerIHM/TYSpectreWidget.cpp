@@ -258,7 +258,7 @@ void TYSpectreWidget::tabValueChanged(int row, int col)
 {
     if (col == 1)
     {
-        // Translate imput value to double to see if it's a correct number 
+        // Translate input value to double to see if it's a correct number 
         bool ok; 
         double val = _tableau->item(row, col)->text().toDouble(&ok);
 
@@ -272,7 +272,7 @@ void TYSpectreWidget::tabValueChanged(int row, int col)
         // Else, we copy value to all the selected cells
         for (int i = 0; i < _nbFreq; i++)
         {
-            if ( ( _tableau->item(i, col) ) && 
+            if ( ( _tableau->item(i, col) ) &&
                  ( _tableau->isItemSelected( _tableau->item(i, col) ) ) )
             {
                     _tableau->item(i, col)->setText(_tableau->item(row, col)->text());
