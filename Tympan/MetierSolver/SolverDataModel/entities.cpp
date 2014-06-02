@@ -491,10 +491,8 @@ Spectrum AtmosphericConditions::compute_length_absorption(double length)
 
 AcousticSource::AcousticSource(
     const Point& position_,
-    const binary_uuid& id_,
     const Spectrum& spectrum_ )
     : position(position_)
-    , id(id_)
     , spectrum(spectrum_)
     , directivity(new SphericalSourceDirectivity())
 {}
@@ -512,9 +510,7 @@ AcousticProblem::AcousticProblem(
 ) : name(name_) {}
 
 
-SiteElement::SiteElement(
-    const binary_uuid& uid_
-) : uid(uid_) {}
+SiteElement::SiteElement() {}
 
 SiteAcousticReceptor::SiteAcousticReceptor(
     unsigned int id_

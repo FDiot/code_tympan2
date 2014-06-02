@@ -23,33 +23,46 @@ cdef class ProblemModel:
     def __cinit__(self):
         self.thisptr = NULL
 
-    def nbpoints(self):
+    def npoints(self):
         if self.thisptr == NULL:
             raise NullCppObject()
-        return self.thisptr.num_points()
+        return self.thisptr.npoints()
 
-    def nbtriangles(self):
+    def ntriangles(self):
         if self.thisptr == NULL:
             raise NullCppObject()
-        return self.thisptr.num_triangles()
+        return self.thisptr.ntriangles()
 
-    def nbmaterials(self):
+    def nmaterials(self):
         if self.thisptr == NULL:
             raise NullCppObject()
-        return self.thisptr.num_materials()
+        return self.thisptr.nmaterials()
+
+    @property
+    def nsources(self):
+        if self.thisptr == NULL:
+            raise NullCppObject()
+        return self.thisptr.nsources()
+
+    def source(self, idx):
+        if self.thisptr == NULL:
+            raise NullCppObject()
+        source = Source()
+        source.thisptr = cython.address(self.thisptr.source(idx))
+        return source
 
     def export_triangular_mesh(self):
         if self.thisptr == NULL:
             raise NullCppObject()
         nb_elts = cython.declare(cython.uint)
         actri = cython.declare(cython.pointer(AcousticTriangle))
-        nb_elts = self.thisptr.num_triangles()
+        nb_elts = self.thisptr.ntriangles()
         triangles = np.empty([nb_elts, 3])
         for i in range(nb_elts):
             actri = cython.address(self.thisptr.triangle(i))
             triangles[i] = [actri.n[0], actri.n[1], actri.n[2]]
         point = cython.declare(cython.pointer(OPoint3D))
-        nb_elts = self.thisptr.num_points()
+        nb_elts = self.thisptr.npoints()
         nodes = np.empty([nb_elts, 3])
         for i in range(nb_elts):
             point = cython.address(self.thisptr.node(i))
@@ -70,10 +83,37 @@ cdef class SolverModelBuilder:
     def __cinit__(self, model):
         self.model = model.thisptr
 
-    @cython.locals(site=Site)
-    def fill_problem(self, site):
+    @cython.locals(site=Site, comp=Computation)
+    def fill_problem(self, site, comp):
         self.process_altimetry(site)
         self.process_infrastructure(site)
+        self.build_sources(site, comp)
+
+    @cython.locals(site=Site, comp=Computation)
+    def build_sources(self, site, comp):
+        infra = cython.declare(cython.pointer(TYInfrastructure))
+        infra = site.thisptr.getRealPointer().getInfrastructure().getRealPointer()
+        map_elt_srcs = cython.declare(map[TYElem_ptr, vector[SmartPtr[TYGeometryNode]]])
+        infra.getAllSrcs(comp.thisptr.getRealPointer(), map_elt_srcs)
+        sources = cython.declare(vector[SmartPtr[TYGeometryNode]])
+        sources_of_elt = cython.declare(vector[SmartPtr[TYGeometryNode]])
+        its = cython.declare(map[TYElem_ptr, vector[SmartPtr[TYGeometryNode]]].iterator)
+        its = map_elt_srcs.begin()
+        while its != map_elt_srcs.end():
+            sources_of_elt = deref(its).second
+            nsources = sources_of_elt.size()
+            for i in xrange(nsources):
+                sources.push_back(sources_of_elt[i])
+            inc(its)
+        nsources = sources.size()
+        pelt = cython.declare(cython.pointer(TYElement))
+        psource = cython.declare(cython.pointer(TYSourcePonctuelle))
+        ppoint = cython.declare(cython.pointer(TYPoint))
+        for i in xrange(nsources):
+            pelt = sources[i].getRealPointer().getElement()
+            psource = downcast_source_ponctuelle(pelt)
+            ppoint = psource.getPos().getRealPointer()
+            self.model.make_source(ppoint[0], psource.getSpectre()[0])
 
     @cython.locals(site=Site)
     def process_infrastructure(self, site):
@@ -89,17 +129,14 @@ cdef class SolverModelBuilder:
         psurf = cython.declare(cython.pointer(TYAcousticSurface))
         site.thisptr.getRealPointer().getListFaces(face_list, nb_building_faces,
                            is_screen_face_idx)
-        element_uid = cython.declare(cython.pointer(UuidAdapter))
         points = cython.declare(deque[OPoint3D])
         triangles = cython.declare(deque[OTriangle])
         for i in range(nb_building_faces):
             pelt = face_list[i].getRealPointer().getElement()
-            psurf = safeDownCast(pelt)
+            psurf = downcast_acoustic_surface(pelt)
             # 'face_list' can contain topography elements. Not relevant here.
             if psurf == NULL:
                 continue
-            # Get the uid for the site element bearing the current acoustic surface
-            element_uid = new UuidAdapter(psurf.getParent().getID())
             # Use the triangulating interface of TYSurfaceInterface to get triangles
             # and convert them to Nodes and AcousticTriangles (beware of mapping
             # TYPoints to Node in the correct way.)
@@ -120,7 +157,6 @@ cdef class SolverModelBuilder:
             # Set the UUID of the site element and the material of the surface
             for i in range(triangles.size()):
                 actri = cython.address(self.model.triangle(i))
-                actri.uuid = (element_uid)[0].getUuid()
                 actri.made_of = pmat
             points.clear()
             triangles.clear()
@@ -161,18 +197,15 @@ cdef class SolverModelBuilder:
         materials = cython.declare(deque[SmartPtr[TYSol]])
         ptopo = cython.declare(cython.pointer(TYTopographie))
         ptopo = site.thisptr.getRealPointer().getTopographie().getRealPointer()
-        element_uid = cython.declare(cython.pointer(UuidAdapter))
-        element_uid = new UuidAdapter(ptopo.getID())
         ptopo.exportMesh(points, triangles, cython.address(materials))
         self.process_mesh(points, triangles)
         # make material
         actri = cython.declare(cython.pointer(AcousticTriangle))
         psol = cython.declare(cython.pointer(TYSol))
         pmat = cython.declare(shared_ptr[AcousticMaterialBase])
-        # Set the UUID of the topography and the material of each triangle
+        # Set the material of each triangle
         for i in range(triangles.size()):
             actri = cython.address(self.model.triangle(i))
-            actri.uuid = element_uid[0].getUuid()
             psol = materials[i].getRealPointer()
             pmat = self.model.make_material(psol.getName().toStdString(),
                                             psol.getResistivite())
@@ -278,6 +311,46 @@ cdef class Spectrum:
         spectrum.thisobj = self.thisobj.toDB()
         return spectrum
 
+cdef class Point3D:
+    thisobj = cython.declare(OPoint3D)
+
+    def __init__(self):
+        pass
+
+    @property
+    def x(self):
+        return self.thisobj._x
+
+    @property
+    def y(self):
+        return self.thisobj._y
+
+    @property
+    def z(self):
+        return self.thisobj._z
+
+cdef class Source:
+    thisptr = cython.declare(cython.pointer(AcousticSource))
+
+    def __cinit__(self):
+        pass
+
+    @property
+    def position(self):
+        if self.thisptr == NULL:
+            raise NullCppObject()
+        point = Point3D()
+        point.thisobj = self.thisptr.position
+        return point
+
+    @property
+    def spectrum(self):
+        if self.thisptr == NULL:
+            raise NullCppObject()
+        spectrum = Spectrum()
+        spectrum.thisobj = self.thisptr.spectrum
+        return spectrum
+
 
 cdef class Computation:
     thisptr = cython.declare(SmartPtr[TYCalcul])
@@ -309,7 +382,7 @@ cdef class Computation:
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
         problem = ProblemModel()
-        problem.thisptr = cython.address(self.thisptr.getRealPointer()._acousticProblem)
+        problem.thisptr = self.thisptr.getRealPointer()._acousticProblem.get()
         return problem
 
     def acoustic_result(self):
@@ -319,7 +392,7 @@ cdef class Computation:
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
         result = ResultModel()
-        result.thisptr = cython.address(self.thisptr.getRealPointer()._acousticResult)
+        result.thisptr = self.thisptr.getRealPointer()._acousticResult.get()
         return result
 
 
@@ -357,4 +430,3 @@ cdef class Project:
             raise ValueError ("Cannot export an empty project")
         # same thing as for load_project about the exception
         save_project(filepath, self.thisptr)
-

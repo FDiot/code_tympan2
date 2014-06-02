@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Ease paths configuration for test in Python
 
 Allow to access the test data, solvers and other resources in a cross
@@ -23,9 +21,11 @@ THIS EXPECTS THE NAME OF THE BUILD CONFIG TO BE TESTED IS PASSED
 AS FIRST ARGUMENT TO THE SCRIPT
 """
 
-import sys, os.path as osp
+import sys
+import os
+import os.path as osp
+from contextlib import contextmanager
 
-import unittest
 
 _HERE = osp.realpath(osp.dirname(__file__))
 PROJECT_BASE = osp.abspath(osp.join(_HERE, '..', '..'))
@@ -63,11 +63,46 @@ else:
 
 
 def main():
+    import unittest
     # The build configuration (Debug or Release) to be tested is added as
     # first argument by CTest and need to be removed from sys.argv not to
     # confuse unittest
-    
     if config:
         del sys.argv[1]
-
     unittest.main()
+
+
+# low level output redirection, see
+# http://stackoverflow.com/questions/4675728/redirect-stdout-to-a-file-in-python/22434262#22434262
+
+def fileno(file_or_fd):
+    fd = getattr(file_or_fd, 'fileno', lambda: file_or_fd)()
+    if not isinstance(fd, int):
+        raise ValueError("Expected a file (`.fileno()`) or a file descriptor")
+    return fd
+
+@contextmanager
+def stdout_redirected(to=os.devnull, stdout=None):
+    if stdout is None:
+       stdout = sys.stdout
+
+    stdout_fd = fileno(stdout)
+    # copy stdout_fd before it is overwritten
+    with os.fdopen(os.dup(stdout_fd), 'wb') as copied:
+        stdout.flush()  # flush library buffers that dup2 knows nothing about
+        try:
+            os.dup2(fileno(to), stdout_fd)  # $ exec >&to
+        except ValueError:  # filename
+            with open(to, 'wb') as to_file:
+                os.dup2(to_file.fileno(), stdout_fd)  # $ exec > to
+        try:
+            yield stdout # allow code to be run with the redirected stdout
+        finally:
+            stdout.flush()
+            os.dup2(copied.fileno(), stdout_fd)  # $ exec >&copied
+
+@contextmanager
+def no_output():
+    with stdout_redirected(stdout=sys.stdout):
+        with stdout_redirected(stdout=sys.stderr):
+            yield

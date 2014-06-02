@@ -175,7 +175,6 @@ public:
     node_idx n[3];
 
     shared_ptr<AcousticMaterialBase> made_of;
-    binary_uuid uuid;
 };
 
 typedef std::deque<AcousticTriangle> triangle_pool_t;
@@ -201,14 +200,12 @@ class AcousticSource:
 {
 public:
     AcousticSource(
-            const Point& point_, 
-            const binary_uuid& id_,
+            const Point& point_,
             const Spectrum& spectrum_);
-        
+
     virtual ~AcousticSource() {};
 
     Point position;
-    binary_uuid id;
     Spectrum spectrum;
     SourceDirectivityInterface* directivity;
 };
@@ -278,10 +275,9 @@ class SiteElement:
     public virtual BaseEntity
 {
 public:
-    SiteElement(const binary_uuid& uid_);
+    SiteElement();
     virtual ~SiteElement() {};
 
-    binary_uuid uid;
 };
 
 

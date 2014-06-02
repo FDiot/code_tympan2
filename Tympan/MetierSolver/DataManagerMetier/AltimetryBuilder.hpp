@@ -39,7 +39,6 @@ using boost::adaptors::transformed;
 namespace tympan
 {
 class AltimetryBuilder;
-class SolverDataModelBuilder;
 }
 
 // Tympan includes site side
@@ -285,15 +284,13 @@ public:
     material_poly_to_face_set_t poly_to_faces;
 
 public:
-    AltimetryBuilder();
-    virtual
-    ~AltimetryBuilder();
+    AltimetryBuilder() {} ;
+    virtual ~AltimetryBuilder() {} ;
 
     //TODO We should properly handle a simple state machine.
 
     // Main methods
 
-    friend class SolverDataModelBuilder;
 
     /**
      * @brief Insert the stored material polygons into the triangulation

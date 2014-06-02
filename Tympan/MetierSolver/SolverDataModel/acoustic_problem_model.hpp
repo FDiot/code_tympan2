@@ -11,6 +11,7 @@
 #define TYMPAN__ACOUSTIC_PROBLEM_MODEL_H__INCLUDED
 
 #include <string>
+#include <memory>
 
 #include "data_model_common.hpp"
 #include "entities.hpp"
@@ -36,11 +37,14 @@ public:
 
     triangle_idx make_triangle(node_idx n1, node_idx n2, node_idx n3);
 
-    size_t num_points() const //TODO move to implementation file
+    size_t npoints() const //TODO move to implementation file
     { return  all_nodes.size(); }
 
-    size_t num_triangles() const //TODO move to implementation file
+    size_t ntriangles() const //TODO move to implementation file
     { return  all_triangles.size(); }
+
+    size_t nsources() const //TODO move to implementation file
+    { return  all_sources.size(); }
 
     AcousticTriangle& triangle(triangle_idx tri_idx)
     { return all_triangles[tri_idx]; }
@@ -54,8 +58,13 @@ public:
     const Point& node(node_idx idx) const
     { return all_nodes[idx]; }
 
+    AcousticSource& source(source_idx idx)
+    { return all_sources[idx]; }
 
-    size_t num_materials() const //TODO move to implementation file
+    const AcousticSource& source(source_idx idx) const
+    { return all_sources[idx]; }
+
+    size_t nmaterials() const //TODO move to implementation file
     { return  all_materials.size(); }
 
     const AcousticMaterialBase& material(size_t mat_idx) const
@@ -85,8 +94,7 @@ public:
      * TODO
      */
     source_idx make_source(
-        const Point& point_, 
-        const binary_uuid& id_,
+        const Point& point_,
         const Spectrum& spectrum_);
 
 public: // XXX Could / should be protected but this complicates testing
@@ -113,6 +121,7 @@ protected: // data members
     receptor_pool_t all_receptors;
 };  // class AcousticProblemModel
 
+    std::unique_ptr<AcousticProblemModel> make_AcousticProblemModel();
 
 } // namespace tympan
 
