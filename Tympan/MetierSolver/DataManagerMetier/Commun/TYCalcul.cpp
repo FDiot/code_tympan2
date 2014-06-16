@@ -753,22 +753,26 @@ int TYCalcul::fromXML(DOM_Element domElement)
         for (iter = _elementSelection.begin(); iter != _elementSelection.end() ; iter++)
         {
             TYElement* pElement = TYElement::getInstance(*iter);
-            if (pElement->inherits("TYAcousticVolumeNode"))
+            TYAcousticVolumeNode* pVolNode = dynamic_cast<TYAcousticVolumeNode*>(pElement);
+            if (pVolNode != nullptr)
             {
-                regime = TYAcousticVolumeNode::safeDownCast(pElement)->getCurRegime();
-                bEmit = TYAcousticVolumeNode::safeDownCast(pElement)->getIsRayonnant();
+                regime = pVolNode->getCurRegime();
+                bEmit = pVolNode->getIsRayonnant();
             }
-            else if (pElement->inherits("TYAcousticLine"))
+            else
             {
-                regime = TYAcousticLine::safeDownCast(pElement)->getCurRegime();
-                bEmit = TYAcousticLine::safeDownCast(pElement)->getIsRayonnant();
+                TYAcousticLine* pLine = dynamic_cast<TYAcousticLine*>(pElement);
+                if(pLine != nullptr)
+                {
+                    regime = pLine->getCurRegime();
+                    bEmit = pLine->getIsRayonnant();
+                }
+                else if (pElement->isA("TYUserSourcePonctuelle"))
+                {
+                    regime = TYUserSourcePonctuelle::safeDownCast(pElement)->getCurrentRegime();
+                    bEmit = true;
+                }
             }
-            else if (pElement->isA("TYUserSourcePonctuelle"))
-            {
-                regime = TYUserSourcePonctuelle::safeDownCast(pElement)->getCurrentRegime();
-                bEmit = true;
-            }
-
             _mapElementRegime[pElement] = regime;
             _emitAcVolNode[pElement] = bEmit;
 
@@ -899,7 +903,7 @@ void TYCalcul::addToSelection(TYElement* pElt, bool recursif /*=true*/)
             // Si un objet est ajoute son parent l'est forcemment
             addToSelection(pElt->getParent(), false);
         }
-        else if (pElt->inherits("TYSiteNode"))
+        else if (dynamic_cast<TYSiteNode*>(pElt) != nullptr)
         {
             // Si un objet est ajoute son parent l'est forcemment
             addToSelection(pElt->getParent(), false);
@@ -907,10 +911,10 @@ void TYCalcul::addToSelection(TYElement* pElt, bool recursif /*=true*/)
             // Si c'est un site on n'ajoute pas systématiquement tous les enfants
             recursif = false;
         }
-        else if (pElt->inherits("TYAcousticVolumeNode"))
+        else if (dynamic_cast<TYAcousticVolumeNode*>(pElt) != nullptr)
         {
-            TYAcousticVolumeNode* pVolNode = TYAcousticVolumeNode::safeDownCast(pElt);
-            if (pVolNode) { etat = pVolNode->getIsRayonnant(); }
+            TYAcousticVolumeNode* pVolNode = dynamic_cast<TYAcousticVolumeNode*>(pElt);
+            etat = pVolNode->getIsRayonnant();
             _emitAcVolNode[pElt] = etat;
             _mapElementRegime[pElt] = 0;
 
@@ -918,20 +922,20 @@ void TYCalcul::addToSelection(TYElement* pElt, bool recursif /*=true*/)
             addToSelection(pElt->getParent(), false);
 
         }
-        else if (pElt->inherits("TYAcousticLine"))
+        else if (dynamic_cast<TYAcousticLine*>(pElt) != nullptr)
         {
-            TYAcousticLine* pLine = TYAcousticLine::safeDownCast(pElt);
-            if (pLine) { etat = pLine->getIsRayonnant(); }
+            TYAcousticLine* pLine = dynamic_cast<TYAcousticLine*>(pElt);
+            etat = pLine->getIsRayonnant();
             _emitAcVolNode[pElt] = etat;
             _mapElementRegime[pElt] = 0;
 
             // Si un objet est ajoute son parent l'est forcemment
             addToSelection(pElt->getParent(), false);
         }
-        else if (pElt->inherits("TYSourcePonctuelle"))
+        else
         {
-            TYUserSourcePonctuelle* pSource = TYUserSourcePonctuelle::safeDownCast(pElt);
-            if (pSource) { etat = pSource->getIsRayonnant(); }
+            TYUserSourcePonctuelle* pSource = dynamic_cast<TYUserSourcePonctuelle*>(pElt);
+            if (pSource != nullptr) { etat = pSource->getIsRayonnant(); }
             _emitAcVolNode[pElt] = etat;
             _mapElementRegime[pElt] = 0;
 
@@ -997,10 +1001,10 @@ bool TYCalcul::remToSelection(TYElement* pElt, bool recursif /*=true*/)
     }
 
     // Si c'est un siteNode, on fait une mise à jour de l'altimétrie
-    if (pElt->inherits("TYSiteNode"))
+    TYSiteNode* pSite = dynamic_cast<TYSiteNode*>(pElt);
+    if (pSite != nullptr)
     {
         // Dans ce cas, on remonte au site racine et on fait l'update de tout
-        TYSiteNode* pSite = TYSiteNode::safeDownCast(pElt);
         pSite->getProjet()->getSite()->update(true);
     }
 
@@ -1542,16 +1546,11 @@ bool TYCalcul::go()
     // NB This is the place to assert the "no sub-site assumption"
     // required by some variant of the software
 
-    // Fusion des sites
-    LPTYSiteNode pMergeSite = pProjet->getSite()->merge();
-    pMergeSite->update(true);
-    pMergeSite->getTopographie()->sortTerrainsBySurface();
-    pMergeSite->updateAcoustique(true);
 
-    // Actualisation de l'altimetrie des recepteurs (securite)
-    pProjet->updateAltiRecepteurs(pMergeSite->getTopographie()->getAltimetrie());
-
-    pMergeSite->setAtmosphere(getAtmosphere());
+    // There shouldn't be any subsites at this level --> don't call merge but
+    // make sure of it
+    LPTYSiteNode pSite = pProjet->getSite();
+    assert (pSite->getListSiteNode().size() == 0);
 
     TYNameManager::get()->enable(false);
 
@@ -1564,21 +1563,21 @@ bool TYCalcul::go()
     TYXMLManager xmlManager;
 
     xmlManager.createDoc(docName, version);
-    xmlManager.addElement(pMergeSite);
+    xmlManager.addElement(pSite);
     xmlManager.save("merged.xml");
 
 #endif
 
     OMessageManager::get()->info("Recuperation de la liste des sources");
     TYMapElementTabSources& mapElementSources = _pResultat->getMapEmetteurSrcs();
-    pMergeSite->getInfrastructure()->getAllSrcs(this, mapElementSources);
+    pSite->getInfrastructure()->getAllSrcs(this, mapElementSources);
 
     OMessageManager::get()->info("Creation des sources");
     TYTabSourcePonctuelleGeoNode sources;
     getAllSources(mapElementSources, sources);
 
     OMessageManager::get()->info("Selection des points de reception actifs");
-    selectActivePoint(pMergeSite);
+    selectActivePoint(pSite);
 
     OMessageManager::get()->info("Creation des recepteurs");
     TYTabPointCalculGeoNode recepteurs;
@@ -1588,7 +1587,7 @@ bool TYCalcul::go()
     buildValidTrajects(sources, recepteurs);
 
     // XXX Instantiate and call the SolverDataModelBuilder here ...
-    if (isCalculPossible(static_cast<int>(sources.size()), static_cast<int>(recepteurs.size()), pMergeSite))
+    if (isCalculPossible(static_cast<int>(sources.size()), static_cast<int>(recepteurs.size()), pSite))
     {
         OMessageManager::get()->info("Calcul en cours...");
 
@@ -1608,8 +1607,7 @@ bool TYCalcul::go()
 
         TYSolverInterface* pSolver = TYPluginManager::get()->getSolver(_solverId);
         // XXX ... and pass the SolverDataModel built here.
-        ret = pSolver->solve(*pMergeSite, *this, *_acousticProblem,
-                *_acousticResult);
+        ret = pSolver->solve(*pSite, *this, *_acousticProblem, *_acousticResult);
         pSolver->purge();
 
         // Cumul de la pression aux differents points de calcul
@@ -1626,7 +1624,9 @@ bool TYCalcul::go()
             // Suppression des points de maillage de la matrice
             for (unsigned int i = 0; i < recepteurs.size(); i++)
             {
-                if (recepteurs[i]->getElement()->getParent()->inherits("TYMaillage"))
+                TYMaillage* pMail = dynamic_cast<TYMaillage*>(
+                        recepteurs[i]->getElement()->getParent());
+                if (pMail != nullptr)
                 {
                     _pResultat->remSpectres(static_cast<TYPointCalcul*>(recepteurs[i]->getElement()));
                 }
@@ -1656,7 +1656,7 @@ bool TYCalcul::go()
     // Il est necessaire de reattribuer les parents des elements du site merges
     getProjet()->getSite()->reparent();
 
-    pMergeSite = NULL;
+    pSite = NULL;
 
     sources.clear();
     recepteurs.clear();

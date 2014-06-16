@@ -358,7 +358,9 @@ bool TYElement::deepCopy(const TYElement* pOther, bool copyId /*=true*/)
 {
     if (!pOther) { return false; }     // XXX assert(pOther);
 
-    if (!pOther->inherits(getClassName())) { return false; }
+    // For now we don't look at the hierarchy. Let's suppose we are expecting
+    // to copy an element of the same class as this
+    if (strcmp(pOther->getClassName(), getClassName()) != 0) { return false; }
 
     _name = pOther->_name;
     _copyCount = pOther->_copyCount;
@@ -611,20 +613,13 @@ std::string TYElement::getMetierName()
         try
         {
             // Auto construction
-            pElt = (TYElement*) TYElement::findAndClone((char*)str.toAscii().data());
+            pElt = dynamic_cast<TYElement*>(TYElement::findAndClone((char*)str.toAscii().data()));
         }
-        catch(tympan::invalid_data& exc)
-        {
-            std::ostringstream msg;
-            msg << boost::diagnostic_information(exc);
-            OMessageManager::get()->error(
-                    "Asked to clone class %s which isn't registered in OPrototype",
-                    str.toStdString().c_str());
-            OMessageManager::get()->debug(msg.str().c_str());
-            pElt = NULL;
-        }
+        catch(tympan::invalid_data& exc) {pElt = nullptr;}
 
-        if (pElt && pElt->inherits(type))
+        // For now we don't look at the hierarchy. Let's suppose we are
+        // looking for the very type we cloned which is the most likely hypothesis
+        if ((pElt != nullptr) && (strcmp(pElt->getClassName(), type) == 0))
         {
             // Parsing XML
             pElt->fromXML(elemCur);

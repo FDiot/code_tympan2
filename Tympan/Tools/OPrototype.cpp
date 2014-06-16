@@ -1,5 +1,5 @@
 /*
- * Copyright (C) <2012> <EDF-R&D> <FRANCE>
+ * Copyright (C) <2014> <EDF-R&D> <FRANCE>
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -13,20 +13,11 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-/*
- *
- */
-
-
-
-
 #include "OPrototype.h"
 #include "Tympan/MetierSolver/CommonTools/exceptions.hpp"
 #include <string.h>
 
 // Declaration des membres statiques.
-OPrototype* OPrototype::_prototypes[];
-int         OPrototype::_nbPrototypes = 0;
 std::unordered_map<std::string, OPrototype::IOProtoFactory::ptr_type> OPrototype::_factory_map;
 
 OPrototype::OPrototype()
@@ -45,12 +36,14 @@ OPrototype::~OPrototype()
 
 /*static*/ OPrototype* OPrototype::findAndClone(const char* className)
 {
-    std::unordered_map<std::string, IOProtoFactory::ptr_type>::const_iterator it =
-        _factory_map.find(className);
+    auto it = _factory_map.find(className);
 
     if (it == _factory_map.end())
     {
-        throw tympan::invalid_data("Class does not exist") << tympan_source_loc
+        std::string err_msg ("Asked to clone class ");
+        err_msg.append (className);
+        err_msg.append (" which isn't registered in OPrototype.");
+        throw tympan::invalid_data(err_msg) << tympan_source_loc
             << tympan::oproto_classname_errinfo(className);
     }
     else
@@ -70,20 +63,6 @@ bool OPrototype::isA(const char* className) const
 {
     // Test le nom du type
     return (!strcmp(className, this->getClassName()));
-}
-
-bool OPrototype::inherits(const char* className) const
-{
-    return OPrototype::isTypeOf(className);
-}
-
-/*static*/ bool OPrototype::isTypeOf(const char* className)
-{
-    if (!strcmp(className, "OPrototype"))
-    {
-        return true;
-    }
-    return false;
 }
 
 /*static*/ OPrototype* OPrototype::safeDownCast(OPrototype* pObject)

@@ -84,7 +84,7 @@ class geometry_modifier;
 */
 class TYRay: public TYElement
 {
-    OPROTOSUPERDECL(TYRay, TYElement)
+    OPROTODECL(TYRay)
     TY_EXT_GRAPHIC_DECL_ONLY(TYRay)
 
 public:

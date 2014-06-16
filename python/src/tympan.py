@@ -2,7 +2,10 @@ import sys
 import logging
 import os.path as osp
 
-logging.basicConfig(filename='tympan.log',level=logging.DEBUG,
+# open file in unbuffered mode so it get written asap, in case of later crash
+# due to underlying C code
+stream = open('tympan.log', 'a', 0)
+logging.basicConfig(stream=stream, level=logging.DEBUG,
                     format='%(levelname)s:%(asctime)s - %(name)s - %(message)s')
 
 
@@ -34,11 +37,16 @@ def solve_acoustic_problem(input_project, output_project, solverdir):
     except RuntimeError:
         logging.exception("Couldn't load the acoustic project from %s file", input_project)
         raise
-    comp = project.current_computation()
+    comp = project.current_computation
     # Build an acoustic problem from the site of the computation
-    problem = comp.acoustic_problem()
+    problem = comp.acoustic_problem
     builder = pytam.SolverModelBuilder(problem)
-    builder.fill_problem(project.site(), comp)
+    # Update site before building the acoustic problem
+#    site.update()
+    project.update_site() # update atmosphere, acoustic and infrastructure (altimetry)
+    project.update_altimetry_on_receptors()
+    site = project.site
+    builder.fill_problem(site, comp)
     # Load solver plugin
     pytam.loadsolver(solverdir, comp)
     # Solve the problem and fill the acoustic result

@@ -60,13 +60,13 @@ cdef class ProblemModel:
         actri = cython.declare(cython.pointer(AcousticTriangle))
         nb_elts = self.thisptr.ntriangles()
         triangles = np.empty([nb_elts, 3])
-        for i in range(nb_elts):
+        for i in xrange(nb_elts):
             actri = cython.address(self.thisptr.triangle(i))
             triangles[i] = [actri.n[0], actri.n[1], actri.n[2]]
         point = cython.declare(cython.pointer(OPoint3D))
         nb_elts = self.thisptr.npoints()
         nodes = np.empty([nb_elts, 3])
-        for i in range(nb_elts):
+        for i in xrange(nb_elts):
             point = cython.address(self.thisptr.node(i))
             nodes[i] = [point._x, point._y, point._z]
         return (nodes, triangles)
@@ -105,7 +105,8 @@ cdef class SolverModelBuilder:
             sources_of_elt = deref(its).second
             nsources = sources_of_elt.size()
             for i in xrange(nsources):
-                sources.push_back(sources_of_elt[i])
+                if sources_of_elt[i].getRealPointer() != NULL:
+                    sources.push_back(sources_of_elt[i])
             inc(its)
         nsources = sources.size()
         pelt = cython.declare(cython.pointer(TYElement))
@@ -133,7 +134,7 @@ cdef class SolverModelBuilder:
                            is_screen_face_idx)
         points = cython.declare(deque[OPoint3D])
         triangles = cython.declare(deque[OTriangle])
-        for i in range(nb_building_faces):
+        for i in xrange(nb_building_faces):
             pelt = face_list[i].getRealPointer().getElement()
             psurf = downcast_acoustic_surface(pelt)
             # 'face_list' can contain topography elements. Not relevant here.
@@ -157,7 +158,7 @@ cdef class SolverModelBuilder:
                                             spectre)
             actri = cython.declare(cython.pointer(AcousticTriangle))
             # Set the UUID of the site element and the material of the surface
-            for i in range(triangles.size()):
+            for i in xrange(triangles.size()):
                 actri = cython.address(self.model.triangle(i))
                 actri.made_of = pmat
             points.clear()
@@ -204,7 +205,7 @@ cdef class SolverModelBuilder:
         psol = cython.declare(cython.pointer(TYSol))
         pmat = cython.declare(shared_ptr[AcousticMaterialBase])
         # Set the material of each triangle
-        for i in range(triangles.size()):
+        for i in xrange(triangles.size()):
             actri = cython.address(self.model.triangle(i))
             psol = materials[i].getRealPointer()
             pmat = self.model.make_material(psol.getName().toStdString(),
@@ -245,12 +246,20 @@ cdef class Site:
         # Constructs a python list and appends to it the LPTYElement objects
         # previously wrapped into Elements objects
         pylist = []
-        for i in range(childs.size()):
+        for i in xrange(childs.size()):
             child = Element()
             child.thisptr = childs[i]
             pylist.append(child)
         return pylist
 
+    def update(self):
+        """ Updates a site:
+            - Updates the altimetry of the infrastructure elements
+            - Updates the acoustic of the infrastructure elements
+        """
+        self.thisptr.getRealPointer().getTopographie().getRealPointer().sortTerrainsBySurface()
+        self.thisptr.getRealPointer().updateAltiInfra(True)
+        self.thisptr.getRealPointer().updateAcoustique(True)
 
 cdef class Result:
     thisptr = cython.declare(SmartPtr[TYResultat])
@@ -374,7 +383,7 @@ cdef class Computation:
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
         return self.thisptr.getRealPointer().go()
-
+    @property
     def acoustic_problem(self):
         """ Returns an acoustic problem model (geometric representation as
         used by the solvers)
@@ -385,6 +394,7 @@ cdef class Computation:
         problem.thisptr = self.thisptr.getRealPointer()._acousticProblem.get()
         return problem
 
+    @property
     def acoustic_result(self):
         """ Returns an acoustic result model (geometric representation as used
         by the solvers)
@@ -402,6 +412,20 @@ cdef class Project:
     def __cinit__(self):
         self.thisptr = SmartPtr[TYProjet]()
 
+    def update_site(self):
+        self.site.update()
+        atmosphere = cython.declare(SmartPtr[TYAtmosphere])
+        atmosphere = self.thisptr.getRealPointer().getCurrentCalcul().getRealPointer().getAtmosphere()
+        self.thisptr.getRealPointer().getSite().getRealPointer().setAtmosphere(atmosphere)
+
+    def update_altimetry_on_receptors(self):
+        site = cython.declare(cython.pointer(TYSiteNode))
+        site = self.thisptr.getRealPointer().getSite().getRealPointer()
+        alti = cython.declare(cython.pointer(TYAltimetrie))
+        alti = site.getTopographie().getRealPointer().getAltimetrie().getRealPointer()
+        self.thisptr.getRealPointer().updateAltiRecepteurs(alti)
+
+    @property
     def current_computation(self):
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
@@ -409,6 +433,7 @@ cdef class Project:
         comp.thisptr = self.thisptr.getRealPointer().getCurrentCalcul()
         return comp
 
+    @property
     def site(self):
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
