@@ -14,9 +14,16 @@ class NullCppObject(Exception):
 
 @cython.locals(comp=Computation)
 def loadsolver(foldername, comp):
+    """ Load a solver plugin (looked for in the 'foldername' folder) that will
+        be used to compute 'comp'
+    """
     load_solver(foldername, comp.thisptr.getRealPointer())
 
 def init_tympan_registry():
+    """ Trigger the registration of Tympan business classes (TY* classes).
+        It is necessary to do it before playing with Tympan library (just after
+        pytam import)
+    """
     init_registry()
 
 cdef class ProblemModel:
@@ -26,27 +33,41 @@ cdef class ProblemModel:
         self.thisptr = NULL
 
     def npoints(self):
+        """ Return the number of mesh nodes contained in the acoustic problem
+            model
+        """
         if self.thisptr == NULL:
             raise NullCppObject()
         return self.thisptr.npoints()
 
     def ntriangles(self):
+        """ Return the number of mesh triangles contained in the acoustic problem
+            model
+        """
         if self.thisptr == NULL:
             raise NullCppObject()
         return self.thisptr.ntriangles()
 
     def nmaterials(self):
+        """ Return the number of acoustic materials contained in the acoustic
+            problem model
+        """
         if self.thisptr == NULL:
             raise NullCppObject()
         return self.thisptr.nmaterials()
 
     @property
     def nsources(self):
+        """ Return the number of acoustic sources involved in the acoustic
+            problem model
+        """
         if self.thisptr == NULL:
             raise NullCppObject()
         return self.thisptr.nsources()
 
     def source(self, idx):
+        """ Return the acoustic source (Source object) of index 'idx'
+        """
         if self.thisptr == NULL:
             raise NullCppObject()
         source = Source()
@@ -54,6 +75,14 @@ cdef class ProblemModel:
         return source
 
     def export_triangular_mesh(self):
+        """ Build a triangular mesh from the acoustic problem model.
+            Return two nparrays:
+                * 'nodes': an array of nodes (of dimension 'npoints'X3), where
+                each line stands for a node and contains 3 coordinates)
+                * 'triangles': an array of triangles (of dimension 'ntriangles'X3),
+                where each line stands for a triangle and contains the indices of
+                its 3 vertices in the 'nodes' array.
+        """
         if self.thisptr == NULL:
             raise NullCppObject()
         nb_elts = cython.declare(cython.uint)
@@ -87,12 +116,21 @@ cdef class SolverModelBuilder:
 
     @cython.locals(site=Site, comp=Computation)
     def fill_problem(self, site, comp):
+        """ Fill the acoustic problem model: build an acoustic mesh, sources
+            and receptors.
+        """
         self.process_altimetry(site)
         self.process_infrastructure(site)
         self.build_sources(site, comp)
+        self.build_receptors(site, comp)
 
     @cython.locals(site=Site, comp=Computation)
     def build_sources(self, site, comp):
+        """ Retrieve the sources from the site infrastructure (TYSourcePonctuelle),
+            and make acoustic sources from them (using their position and their
+            spectrum).
+            Add these acoustic sources to the acoustic problem model.
+        """
         infra = cython.declare(cython.pointer(TYInfrastructure))
         infra = site.thisptr.getRealPointer().getInfrastructure().getRealPointer()
         map_elt_srcs = cython.declare(map[TYElem_ptr, vector[SmartPtr[TYGeometryNode]]])
@@ -112,11 +150,53 @@ cdef class SolverModelBuilder:
         pelt = cython.declare(cython.pointer(TYElement))
         psource = cython.declare(cython.pointer(TYSourcePonctuelle))
         ppoint = cython.declare(cython.pointer(TYPoint))
+        # TYGeometryNode objects contain TYSourcePonctuelle objects as their element
         for i in xrange(nsources):
             pelt = sources[i].getRealPointer().getElement()
             psource = downcast_source_ponctuelle(pelt)
             ppoint = psource.getPos().getRealPointer()
             self.model.make_source(ppoint[0], psource.getSpectre()[0])
+
+    @cython.locals(site=Site, comp=Computation)
+    def build_receptors(self, site, comp):
+        """ Retrieve the mesh points (TYPointCalcul, TYPointControl) used in the
+            current computation (the active ones), build the acoustic receptors
+            using their position and add them to the acoustic problem model.
+        """
+        project = cython.declare(cython.pointer(TYProjet))
+        project = site.thisptr.getRealPointer().getProjet()
+        # First add isolated receptors to the acoustic problem model
+        control_points = cython.declare(vector[SmartPtr[TYPointControl]])
+        control_points = project.getPointsControl()
+        n_ctrl_pts = control_points.size()
+        for i in xrange(n_ctrl_pts):
+            # if control point state == active (with respect to the current computation)
+            if control_points[i].getRealPointer().getEtat(comp.thisptr.getRealPointer()):
+                # inheritance: TYPointControl > TYPointCalcul > TYPoint > OPoint3D > OCoord3D
+                # call to OPoint3D copy constructor to record control point coordinates
+                self.model.make_receptor((control_points[i].getRealPointer())[0])
+        # Then add mesh points to the acoustic problem model
+        meshes = cython.declare(vector[SmartPtr[TYGeometryNode]])
+        meshes = comp.thisptr.getRealPointer().getMaillages()
+        mesh = cython.declare(cython.pointer(TYMaillage))
+        mesh_points = cython.declare(vector[SmartPtr[TYPointCalcul]])
+        nmeshes = meshes.size()
+        for i in xrange(nmeshes):
+            matrix = cython.declare(OMatrix)
+            matrix = meshes[i].getRealPointer().getMatrix()
+            mesh = downcast_maillage(meshes[i].getRealPointer().getElement())
+            # mesh point must be active
+            if mesh.getState() != Actif: # enum value from MaillageState (class TYMaillage)
+                continue
+            mesh_points = mesh.getPtsCalcul()
+            n_mesh_points = mesh_points.size()
+            for j in xrange(n_mesh_points):
+                # if control point state == active (with respect to the current computation)
+                if mesh_points[i].getRealPointer().getEtat(comp.thisptr.getRealPointer()):
+                    # XXX here we should take into account the global position
+                    # should we add the matrix to the AcousticReceptor class ?
+                    # Will be clarified when writing the tests
+                    self.model.make_receptor((mesh_points[i].getRealPointer())[0])
 
     @cython.locals(site=Site)
     def process_infrastructure(self, site):
@@ -154,7 +234,7 @@ cdef class SolverModelBuilder:
             spectre = cython.declare(TYSpectre)
             spectre = pbuildmat.getSpectreAbso()
             pmat = cython.declare(shared_ptr[AcousticMaterialBase])
-            pmat = self.model.make_material( pbuildmat.getName().toStdString(),
+            pmat = self.model.make_material(pbuildmat.getName().toStdString(),
                                             spectre)
             actri = cython.declare(cython.pointer(AcousticTriangle))
             # Set the UUID of the site element and the material of the surface
@@ -193,6 +273,11 @@ cdef class SolverModelBuilder:
 
     @cython.locals(site=Site)
     def process_altimetry(self, site):
+        """ Call Tympan methods to make a mesh (points, triangles, materials)
+            out of the site altimetry. Read and export this mesh to the
+            acoustic problem model (see also process_mesh), converting the data
+            in basic classes 'understandable' by the solvers (see entities.hpp).
+        """
         points = cython.declare(deque[OPoint3D])
         triangles = cython.declare(deque[OTriangle])
         materials = cython.declare(deque[SmartPtr[TYSol]])
@@ -213,12 +298,6 @@ cdef class SolverModelBuilder:
             actri.made_of = pmat
 
 
-cdef class ElementArray:
-    thisptr = cython.declare(vector[SmartPtr[TYElement]])
-    def __cinit__(self):
-        pass
-
-
 cdef class Element:
     thisptr = cython.declare(SmartPtr[TYElement])
 
@@ -226,6 +305,8 @@ cdef class Element:
         self.thisptr = SmartPtr[TYElement]()
 
     def name(self):
+        """ Return the name of the element
+        """
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
         return self.thisptr.getRealPointer().getName().toStdString()
@@ -238,6 +319,9 @@ cdef class Site:
         self.thisptr = SmartPtr[TYSiteNode]()
 
     def childs(self):
+        """ Return the direct childs of the Site (ie the elements it contains)
+            as a python list. Not recursive.
+        """
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
         childs = cython.declare(vector[SmartPtr[TYElement]])
@@ -254,9 +338,14 @@ cdef class Site:
 
     def update(self):
         """ Updates a site:
+            - "Sort" terrains contained in a topography
             - Updates the altimetry of the infrastructure elements
             - Updates the acoustic of the infrastructure elements
         """
+        # This method actually leads to the dynamic allocation of an array of
+        # TYGeometryNode that will be accessed by some other method(s) later on.
+        # Not calling this method leads to a segmentation fault since the array
+        # doesn't exist then.
         self.thisptr.getRealPointer().getTopographie().getRealPointer().sortTerrainsBySurface()
         self.thisptr.getRealPointer().updateAltiInfra(True)
         self.thisptr.getRealPointer().updateAcoustique(True)
@@ -276,22 +365,47 @@ cdef class Result:
         return self.thisptr.getRealPointer().getNbOfSources()
 
     @property
-    def nreceivers(self):
-        """ Returns the number of acoustic receivers
+    def nreceptors(self):
+        """ Returns the number of acoustic receptors
         """
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
         return self.thisptr.getRealPointer().getNbOfRecepteurs()
 
-    def spectrum(self, receiver, source):
-        """ Returns the computed acoustic spectrum
+    def receptor(self, index):
+        """ Return the receptor of index 'index'
+        """
+        if self.thisptr.getRealPointer() == NULL:
+            raise NullCppObject()
+        receptor = Receptor()
+        receptor.thisptr = self.thisptr.getRealPointer().getRecepteur(index)
+        return receptor
+
+    def spectrum(self, receptor, source):
+        """ Return the computed acoustic spectrum
         """
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
         spec = Spectrum()
-        spec.thisobj = self.thisptr.getRealPointer().getSpectre(receiver, source)
+        spec.thisobj = self.thisptr.getRealPointer().getSpectre(receptor, source)
         return spec
 
+
+cdef class Receptor:
+    thisptr = cython.declare(SmartPtr[TYPointCalcul])
+
+    def __cinit__(self):
+        pass
+
+    def is_control_point(self):
+        """ Return true if the receptor is a control point (that is, a kind of
+            "smart" receptor), false otherwise
+        """
+        if self.thisptr.getRealPointer() == NULL:
+            raise NullCppObject()
+        control_point = cython.declare(cython.pointer(TYPointControl))
+        control_point = downcast_point_control(self.thisptr.getRealPointer())
+        return (control_point != NULL)
 
 cdef class Spectrum:
     thisobj = cython.declare(OSpectre)
@@ -301,13 +415,13 @@ cdef class Spectrum:
 
     @property
     def nvalues(self):
-        """ Returns the number of values contained in the spectrum
+        """ Return the number of values contained in the spectrum
         """
         return self.thisobj.getNbValues()
 
     @property
     def values(self):
-        """ Returns the values of the spectrum
+        """ Return the values of the spectrum
         """
         cdef cyarray cy_array = <double[:self.nvalues]> self.thisobj.getTabValReel()
         spec_val = np.array(cy_array, dtype=np.double)
@@ -346,6 +460,8 @@ cdef class Source:
 
     @property
     def position(self):
+        """ Return the acoustic source position (as a 'Point3D' object)
+        """
         if self.thisptr == NULL:
             raise NullCppObject()
         point = Point3D()
@@ -354,6 +470,8 @@ cdef class Source:
 
     @property
     def spectrum(self):
+        """ Return the acoustic spectrum of the Source (dB scale, power spectrum)
+        """
         if self.thisptr == NULL:
             raise NullCppObject()
         spectrum = Spectrum()
@@ -369,7 +487,7 @@ cdef class Computation:
 
     @property
     def result(self):
-        """ Returns an acoustic result (business representation)
+        """ Return an acoustic result (business representation)
         """
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
@@ -378,15 +496,24 @@ cdef class Computation:
         return res
 
     def go(self):
-        """ Solves the current acoustic problem. A solver must be loaded.
+        """ Solve the current acoustic problem. A solver must be loaded.
         """
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
         return self.thisptr.getRealPointer().go()
+
+    def set_nthread(self, nthread):
+        """ Set the number of threads used by the default solver to compute the
+            acoustic problem
+        """
+        if self.thisptr.getRealPointer() == NULL:
+            raise NullCppObject()
+        self.thisptr.getRealPointer().setNbThread(nthread)
+
     @property
     def acoustic_problem(self):
-        """ Returns an acoustic problem model (geometric representation as
-        used by the solvers)
+        """ Return an acoustic problem model (geometric representation as
+            used by the solvers)
         """
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
@@ -413,20 +540,33 @@ cdef class Project:
         self.thisptr = SmartPtr[TYProjet]()
 
     def update_site(self):
+        """ Update the project site (altimetry, atmosphere, inactive mesh points
+            detection).
+        """
         self.site.update()
+        computation = cython.declare(cython.pointer(TYCalcul))
+        computation = self.thisptr.getRealPointer().getCurrentCalcul().getRealPointer()
         atmosphere = cython.declare(SmartPtr[TYAtmosphere])
-        atmosphere = self.thisptr.getRealPointer().getCurrentCalcul().getRealPointer().getAtmosphere()
+        atmosphere = computation.getAtmosphere()
         self.thisptr.getRealPointer().getSite().getRealPointer().setAtmosphere(atmosphere)
+        # detect and deactivate the mesh points that are inside machines or buildings
+        computation.selectActivePoint(self.thisptr.getRealPointer().getSite())
 
     def update_altimetry_on_receptors(self):
+        """ Call Tympan method to update the acoustic receptors
+            (TYPointControl objects) with regard to the current altimetry
+        """
         site = cython.declare(cython.pointer(TYSiteNode))
         site = self.thisptr.getRealPointer().getSite().getRealPointer()
         alti = cython.declare(cython.pointer(TYAltimetrie))
+        # Retrieve current altimetry from the site topography
         alti = site.getTopographie().getRealPointer().getAltimetrie().getRealPointer()
         self.thisptr.getRealPointer().updateAltiRecepteurs(alti)
 
     @property
     def current_computation(self):
+        """ Return the project current computation
+        """
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
         comp = Computation()
@@ -435,6 +575,8 @@ cdef class Project:
 
     @property
     def site(self):
+        """ Return the site considered in the project
+        """
         if self.thisptr.getRealPointer() == NULL:
             raise NullCppObject()
         site = Site()
@@ -443,6 +585,8 @@ cdef class Project:
 
     @staticmethod
     def from_xml(filepath):
+        """ Build a project (TYProject) from a xml file
+        """
         project = Project()
         # if an exception is raised from the C++ code, it will be converted to
         # RuntimeError python exception. what() message should be preserved.
@@ -451,6 +595,8 @@ cdef class Project:
         return project
 
     def to_xml(self, filepath):
+        """ Export an acoustic project to a XML file
+        """
         if self.thisptr.getRealPointer() == NULL:
             raise ValueError ("Cannot export an empty project")
         # same thing as for load_project about the exception
