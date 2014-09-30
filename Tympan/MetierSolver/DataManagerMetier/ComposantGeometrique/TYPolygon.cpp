@@ -473,12 +473,7 @@ TYRectangle TYPolygon::getBoundingRect() const
     }
 
     // Changement de repere
-    OMatrix matrix;
-
-    if (!getRepere().getMatChangeRep(matrix))
-    {
-        return BoundingRect;
-    }
+    OMatrix matrix = getRepere().asMatrix();
 
     matrix.invert();
 
