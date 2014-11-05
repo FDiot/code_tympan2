@@ -10,10 +10,10 @@ from shapely import geometry
 from shapely.geometry import MultiLineString, LineString
 
 # NB Importing altimetry configures path to find CGAL bindings
-from tympan.altimetry.datamodel import (LevelCurve, MaterialArea, GroundMaterial,
-                                 WaterBody, SiteNode, PolygonalTympanFeature,
-                                 InconsistentGeometricModel, MATERIAL_WATER,
-                                 elementary_shapes)
+from tympan.altimetry.datamodel import (
+    LevelCurve, MaterialArea, VegetationArea, GroundMaterial, WaterBody,
+    SiteNode, PolygonalTympanFeature, InconsistentGeometricModel,
+    MATERIAL_WATER, elementary_shapes)
 from tympan.altimetry.merge import (SiteNodeGeometryCleaner, build_site_shape_with_hole,
                              recursively_merge_all_subsites)
 
@@ -70,6 +70,15 @@ class AltimetryDataTC(unittest.TestCase):
         self.assertIn(level_curve_B, self.subsite_A.children["LevelCurve"])
         self.assertEqual(level_curve_B.parent_site_id, "{Sub-site A ID}")
 
+    def test_parent_site(self):
+        level_curve_B =  LevelCurve(self.level_curve_B_coords, altitude=20.0,
+                                    id=None)
+        self.assertIsNone(self.subsite_A.parent_site)
+        level_curve_B.parent_site = self.subsite_A
+        self.assertIn(level_curve_B, self.subsite_A.children["LevelCurve"])
+        del level_curve_B.parent_site
+        self.assertNotIn(level_curve_B, self.subsite_A.children['LevelCurve'])
+
     def test_cached_shape_property(self):
         level_curve_B =  LevelCurve(self.level_curve_B_coords, altitude=20.0, id=None)
         self.assertIsNone(level_curve_B._shape)
@@ -116,13 +125,17 @@ class AltimetryDataTC(unittest.TestCase):
                                     parent_site=subsite, id=None)
         level_curve_A =  LevelCurve(self.level_curve_A_coords, altitude=10.0,
                                     parent_site=mainsite, id=None)
-        waterbody=  WaterBody(self.waterbody_coords, altitude=5,
+        waterbody = WaterBody(self.waterbody_coords, altitude=5,
                               parent_site=mainsite, id=None)
-        material_area_A = MaterialArea(self.material_area_A_coords, material=self.grass,
-                                       parent_site=mainsite, id=None)
+        vegarea = VegetationArea([(1, 1), (1, 3), (3, 1)],
+                                 material=GroundMaterial('pine'), height=3,
+                                 id=None)
+        vegarea.parent_site = mainsite
+        mainsite.add_child(self.material_area_A)
 
         self.assertItemsEqual(mainsite.level_curves, [level_curve_A, waterbody])
-        self.assertItemsEqual(mainsite.material_areas, [material_area_A, waterbody])
+        self.assertItemsEqual(mainsite.material_areas,
+                              [self.material_area_A, waterbody, vegarea])
         self.assertItemsEqual(mainsite.subsites, [subsite])
         self.assertItemsEqual(subsite.level_curves, [level_curve_B])
 
@@ -255,6 +268,19 @@ class AltimetryMergerTC(unittest.TestCase, TestFeatures):
 
         cleaner.process_material_areas()
         self.assertEqual(cleaner.check_issues_with_material_area_order(), [])
+
+    def test_sorting_material_problems(self):
+        # Build a material area which touches another one.
+        grass_area_coords = [(0, 9), (12, 9), (12, 10), (0, 10)]
+        other_grass = MaterialArea(grass_area_coords,
+                                   material=self.grass,
+                                   parent_site=self.mainsite,
+                                   id="{Other grass area}")
+        self.mainsite.add_child(other_grass)
+        cleaner = SiteNodeGeometryCleaner(self.mainsite)
+        cleaner.process_material_areas()
+        problems = cleaner.check_issues_with_material_area_order()
+        self.assertEqual(problems, [('{Grass area}', '{Other grass area}')])
 
     def test_merge_subsite_material(self):
         self.subgrass = MaterialArea(rect(6, 7, 7, 8), material=self.grass,

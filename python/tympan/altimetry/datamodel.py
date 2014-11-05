@@ -144,10 +144,24 @@ class TympanFeature(GeometricFeature):
 
     def __init__(self, coords, parent_site=None, **kwargs):
         super(TympanFeature, self).__init__(coords, **kwargs)
-        self.parent_site = parent_site
-        if self.parent_site is not None:
-            assert isinstance(self.parent_site, (SiteNode,))
-            self.parent_site.add_child(self)
+        self._parent_site = None
+        if parent_site:
+            self.parent_site = parent_site
+
+    @property
+    def parent_site(self):
+        """Parent site for this feature"""
+        return self._parent_site
+
+    @parent_site.setter
+    def parent_site(self, parent):
+        parent.add_child(self)
+        self._parent_site = parent
+
+    @parent_site.deleter
+    def parent_site(self):
+        self._parent_site.drop_child(self)
+        self._parent_site = None
 
     @property
     def tympan_type(self):
@@ -246,7 +260,7 @@ class WaterBody(MaterialArea, LevelCurve):
 
 class SiteNode(PolygonalTympanFeature):
 
-    CHILDREN_TYPES = ("LevelCurve", "MaterialArea", "WaterBody",
+    CHILDREN_TYPES = ("LevelCurve", "MaterialArea", "VegetationArea", "WaterBody",
                       "SiteLandtake", "InfrastructureLandtake", "SiteNode")
 
     def __init__(self, coords, **kwargs):
@@ -264,6 +278,11 @@ class SiteNode(PolygonalTympanFeature):
             "No more than one site landtake is allowed (%s already got %s)" %
             (self, self.children["SiteLandtake"]))
 
+    def drop_child(self, child):
+        """Remove a feature from site children"""
+        del self.features_by_id[child.id]
+        self.children[child.tympan_type].remove(child)
+
     @staticmethod
     def recursive_features_ids(site):
         if site is None:
@@ -279,7 +298,8 @@ class SiteNode(PolygonalTympanFeature):
 
     @property
     def material_areas(self):
-        return self._iter_children("MaterialArea", "WaterBody")
+        return self._iter_children("MaterialArea", "VegetationArea",
+                                   "WaterBody")
 
     @property
     def subsites(self):
@@ -295,16 +315,18 @@ class SiteNode(PolygonalTympanFeature):
 
     @property
     def all_features(self):
-        return self._iter_children('LevelCurve', 'MaterialArea', 'WaterBody',
-                                   'InfrastructureLandtake', 'SiteLandtake')
+        """All child features but site nodes"""
+        features_type = set(self.CHILDREN_TYPES) - set(["SiteNode"])
+        return self._iter_children(*features_type)
 
     def _iter_children(self, *args):
         return chain(*[self.children[k] for k in args])
 
     @property
     def non_altimetric_features(self):
-        return ( self.children["MaterialArea"] +
-                 self.children["InfrastructureLandtake"] )
+        return (self.children["MaterialArea"] +
+                self.children["VegetationArea"] +
+                self.children["InfrastructureLandtake"] )
 
 
 class SiteLandtake(LevelCurve):
