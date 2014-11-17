@@ -48,8 +48,12 @@ class InconsistentGeometricModel(Exception):
 
 class GroundMaterial(object):
 
-    def __init__(self, id_):
+    def __init__(self, id_, resistivity=None):
         self.id = id_
+        self.resistivity = resistivity
+
+    def __str__(self):
+        return '%s #%s' % (self.__class__.__name__, self.id)
 
 
 MATERIAL_WATER = GroundMaterial("Water")
@@ -74,6 +78,8 @@ class GeometricFeature(object):
         self._shape = shape
         if isinstance(shape, geometry.base.BaseMultipartGeometry):
             self._coords = [subshape.coords for subshape in shape.geoms]
+        elif isinstance(shape, geometry.Polygon):
+            self._coords = shape.exterior.coords
         else:
             self._coords = shape.coords
 
@@ -208,8 +214,8 @@ class LevelCurve(TympanFeature):
 class PolygonalTympanFeature(TympanFeature):
     geometric_type = "Polygon"
 
-    def __init__(self, coords, **kwargs):
-        self.holes = [_preproc_point_seq(hole) for hole in kwargs.pop("holes", [])]
+    def __init__(self, coords, holes=(), **kwargs):
+        self.holes = [_preproc_point_seq(hole) for hole in holes]
         super(PolygonalTympanFeature, self).__init__(coords, **kwargs)
 
     def build_coordinates(self):
@@ -300,6 +306,10 @@ class SiteNode(PolygonalTympanFeature):
     def material_areas(self):
         return self._iter_children("MaterialArea", "VegetationArea",
                                    "WaterBody")
+
+    @property
+    def vegetation_areas(self):
+        return self._iter_children("VegetationArea")
 
     @property
     def subsites(self):

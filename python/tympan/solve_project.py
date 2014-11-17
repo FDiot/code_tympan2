@@ -26,9 +26,8 @@ except ImportError:
     logging.critical("%s Check PYTHONPATH and path to Tympan libraries.", err)
     raise ImportError(err)
 
-from tympan import SOLVER_CONFIG_ATTRIBUTES
-from tympan.altimetry.builder import Builder
-from tympan.altimetry import process_altimetry
+from tympan import SOLVER_CONFIG_ATTRIBUTES, Simulation
+from tympan.altimetry import export_to_ply, builder
 from tympan.models.solver import Configuration
 
 CONVERTERS = {
@@ -98,14 +97,12 @@ def solve(input_project, output_project, output_mesh, solverdir,
         solver_config.NbThreads = 1
     # Recompute altimetry
     # Rebuild topography with altimetry data model
-    alti_site = process_altimetry.export_site_topo(site)
-    # Compute altimetry and retrieve the resulting mesh
-    builder =  Builder(alti_site)
-    builder.complete_processing()
-    builder.export_to_ply(output_mesh)
-    vertices, faces, materials, faces_materials = builder.build_mesh_data()
+    sml = Simulation(project)
+    _, mesh, feature_by_face = sml.altimetry()
+    material_by_face = builder.material_by_face(feature_by_face)
+    export_to_ply(mesh, material_by_face, output_mesh)
     # Update site and the project before building the solver model
-    site.update_altimetry(vertices, faces, materials, faces_materials)
+    site.update_altimetry(mesh, material_by_face)
     project.update()
     # Build an acoustic problem from the site of the computation
     bus2solv_conv = bus2solv.Business2SolverConverter(comp, project.site)

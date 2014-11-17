@@ -1,11 +1,41 @@
+from functools import partial
+from itertools import izip_longest
 import unittest
 
-from tympan.altimetry.datamodel import InconsistentGeometricModel
+import numpy as np
+from numpy.testing import assert_array_equal
+from shapely.geometry import LineString, Point, Polygon
+
+from tympan.altimetry.datamodel import (InconsistentGeometricModel,
+                                        GroundMaterial)
 from tympan.altimetry import mesh
 from altimetry_testutils import MesherTestUtilsMixin, runVisualTests, rect
 
 if runVisualTests:
     from tympan.altimetry import visu
+
+
+TestFailureException = unittest.TestCase.failureException
+
+
+def assert_geometry_equal(actual, expected):
+    """Assert that two shapely.geometry objects are equal"""
+    if not expected.equals(actual):
+        raise TestFailureException('%s != %s' % (actual, expected))
+
+
+def assert_geometry_items_equal(actual, expected):
+    """Assert that two sequences of shapely.geomety objects are equal"""
+    marker = object()
+    for idx, (a, e) in enumerate(izip_longest(actual, expected,
+                                              fillvalue=marker)):
+        if a is marker or e is marker:
+            raise TestFailureException(
+                'sequences have different number of elements')
+        if not e.equals(a):
+            raise TestFailureException(
+                'elements %d mismatch: %s != %s' % (idx, a, e))
+
 
 class MeshedCDTTC(unittest.TestCase, MesherTestUtilsMixin):
 
@@ -13,7 +43,7 @@ class MeshedCDTTC(unittest.TestCase, MesherTestUtilsMixin):
         self.mesher = mesh.MeshedCDTWithInfo()
 
     def test_insert_point(self):
-        points = [mesh.Point(1, 1)]
+        points = [mesh.to_cgal_point((1, 1))]
         self.mesher.insert_polyline(points)
         self.assert_basic_counts(vertices=1, faces=0)
 
@@ -255,6 +285,36 @@ class MeshedCDTTC(unittest.TestCase, MesherTestUtilsMixin):
         with self.assertRaises(InconsistentGeometricModel):
             degenerate_mesher.locate_point((0, 1))
 
+    def test_segment_intersection(self):
+        points = [(1, 1), (1, 3), (3, 1)]
+        self.mesher.insert_polyline(map(mesh.to_cgal_point, points),
+                                    close_it=True)
+        # No intersection.
+        segment = (0, 0), (0, 3)
+        inter = list(self.mesher.segment_intersection_points(segment))
+        self.assertEqual(inter, [])
+        # One intersection.
+        segment = (0, 1.5), (1.1, 1.5)
+        inter = list(self.mesher.segment_intersection_points(segment))
+        self.assertEqual(len(inter), 1)
+        assert_geometry_equal(inter[0], Point((1, 1.5)))
+        # Two intersections, points only.
+        segment = (0, 2), (4, 2)
+        inter = list(self.mesher.segment_intersection_points(segment))
+        assert_geometry_items_equal(inter, [Point((1, 2)), Point((2, 2))])
+
+    def test_segment_intersection_2elements(self):
+        points = [(1, 3), (3, 1), (3, 3)]
+        self.mesher.insert_polyline(map(mesh.to_cgal_point, points),
+                                    close_it=True)
+        points = [(1, 1), (1, 3), (3, 1)]
+        self.mesher.insert_polyline(map(mesh.to_cgal_point, points),
+                                    close_it=True)
+        segment = (0, 2), (4, 2)
+        inter = list(self.mesher.segment_intersection_points(segment))
+        assert_geometry_items_equal(
+            inter, [Point((1, 2)), Point((2, 2)), Point((3, 2))])
+
 
 class ElevationMeshTC(unittest.TestCase, MesherTestUtilsMixin):
 
@@ -328,7 +388,7 @@ class ElevationMeshTC(unittest.TestCase, MesherTestUtilsMixin):
         (vA, vB, vC, edgeAB, faceABC) = self.build_triangle()
         slope = self.mesher.altitude_for_input_vertex(vC) / vC.point().y()
 
-        mesher2 = self.mesher.copy_as_ElevationMesh()
+        mesher2 = self.mesher.copy(class_=mesh.ElevationMesh)
         vD = mesher2.insert_point((1, 0.5)) # Altitude is missing and this should be OK
         mesher2.update_altitude_from_reference(self.mesher.point_altitude)
 
@@ -426,6 +486,142 @@ class MaterialMeshTC(unittest.TestCase, MesherTestUtilsMixin):
         face_in_hole, expected_None = self.mesher.locate_point((3.25, 3))
         self.assertIsNone(expected_None)
         self.assertNotIn(face_in_hole, flooder.visited)
+
+
+class ElevationProfileTC(unittest.TestCase):
+
+    rectangles = [
+        [(1, 1), (4, 1), (4, 4), (1, 4)],
+        [(1.5, 1.5), (3.5, 1.5), (3.5, 3.5), (1.5, 3.5)],
+        [(2, 2), (3, 2), (3, 3), (2, 3)],
+    ]
+    altitudes = (0, 0, 2)
+    materials = (0, 1, 2)
+
+    def setUp(self):
+        self.mesh = mesh.ReferenceElevationMesh()
+        # Three squares inside each others, with an outer zone at altitude 0
+        # and an inner zone at altitude 2.
+        for points, alt in zip(self.rectangles, self.altitudes):
+            self.mesh.insert_polyline(map(mesh.to_cgal_point, points),
+                                      altitude=alt, close_it=True)
+
+    def test__point_at_distance(self):
+        segment = LineString([(2, 2), (3, 2)])
+        origin = Point(segment.coords[0])
+        profile = mesh.ElevationProfile(self.mesh, segment)
+        p = profile._point_at_distance(0)
+        self.assertEqual(origin.distance(p), 0)
+        self.assertEqual(p.coords[0], origin.coords[0])
+        p = profile._point_at_distance(3)
+        self.assertEqual(origin.distance(p), 3)
+        self.assertEqual(p.coords[0], (5, 2))
+
+    def test_direction(self):
+        segment = LineString([(2, 0), (2, 4)])
+        profile = mesh.ElevationProfile(self.mesh, segment)
+        assert_array_equal(profile.direction, [0, 1])
+
+    def test_point_altitude(self):
+        segment = LineString([(2.5, 0), (2.5, 4)])
+        profile = mesh.ElevationProfile(self.mesh, segment)
+        self.assertIs(profile.point_altitude(0.5),
+                      mesh.UNSPECIFIED_ALTITUDE)
+        self.assertEqual(profile.point_altitude(2.5), 2.0)
+        self.assertEqual(profile.point_altitude(1.5), 0.0)
+
+    def test_interpolation(self):
+        segment = LineString([(2.5, 0), (2.5, 5)])
+        profile = mesh.ElevationProfile(self.mesh, segment)
+        self.assertEqual(profile(0), 0)
+        self.assertEqual(profile(1), 0)
+        self.assertEqual(profile(2), 2)
+        self.assertTrue(0 < profile(1.7) < 2)
+
+    @staticmethod
+    def _polygon_from_face(fh):
+        coords = [(fh.vertex(i).point().x(), fh.vertex(i).point().y())
+                  for i in range(3)]
+        return Polygon(coords)
+
+    def _material_by_face(self):
+        material_by_face = {}
+        # Map rectangles to a material.
+        material_by_rectangle = [
+            (Polygon(rect), mat)
+            for mat, rect in zip(self.materials, self.rectangles)]
+        for fh in self.mesh.cdt.finite_faces():
+            # Some point inside the face triangle.
+            point = self._polygon_from_face(fh).representative_point()
+            # Loop on rectangles from inner-most one.
+            for rect, mat in reversed(material_by_rectangle):
+                if rect.contains(point):
+                    material_by_face[fh] = GroundMaterial(
+                        id_=mat, resistivity=mat)
+                    break
+            else:
+                # Should not occur.
+                raise Exception(
+                    'could not find a rectangle containing %s' % point)
+        return material_by_face
+
+    def test_material_by_face(self):
+        """Test _material_by_face test method"""
+        material_by_face = self._material_by_face()
+        for point, mat in zip([(1.2, 1.2), (1.7, 1.7), (2.2, 2.2)],
+                              self.materials):
+            fh, _ = self.mesh.locate_point(mesh.to_cgal_point(point))
+            self.assertEqual(material_by_face[fh].id, mat)
+
+    def test_point_data_with_material(self):
+        """Test `point_data` method, using `material_by_face` dict."""
+        segment = LineString([(2.5, 0), (2.5, 5)])
+        profile = mesh.ElevationProfile(self.mesh, segment)
+        # `point_material` returns the material at a given point.
+        point_material = partial(profile.point_data,
+                                 face_data=self._material_by_face())
+        # Ouside domain.
+        self.assertIs(point_material(0.1), mesh.UNSPECIFIED_MATERIAL)
+        # Inside first rectangle.
+        self.assertEqual(point_material(1.2).id, 0)
+        # Inside second rectangle.
+        self.assertEqual(point_material(1.7).id, 1)
+        # Inside inner-most rectangle.
+        self.assertEqual(point_material(2.5).id, 2)
+
+    def test_point_data_vertex(self):
+        """Test `point_data` method when the point is on a vertex."""
+        # Beginning of segment is on a vertex of the mesh (first point of
+        # outer rectangle).
+        segment = LineString([(1, 1), (2, 3)])
+        profile = mesh.ElevationProfile(self.mesh, segment)
+        # Point on a vertex.
+        p = self.rectangles[0][0]
+        fh, vh = self.mesh.locate_point(p)
+        self.assertIsInstance(vh, mesh.Vertex_handle)
+        d = profile.point_data(0, face_data=self._material_by_face())
+        self.assertEqual(d.id, 0)
+
+    def assert_within(self, value, bounds):
+        lb, ub = bounds
+        if not lb <= value <= ub:
+            self.fail('%s not within bounds %s' % (value, bounds))
+
+    def test_sigma_interpolation(self):
+        segment = LineString([(2.5, 0), (2.5, 5)])
+        profile = mesh.ElevationProfile(self.mesh, segment)
+        material_by_face = self._material_by_face()
+        # Build an interpolator `sigma` on material resistivity.
+        sigma_by_face = dict((fh, mat.resistivity)
+                             for fh, mat in material_by_face.items())
+        sigma = profile.face_data_interpolator(sigma_by_face)
+        # Inside first rectangle.
+        self.assert_within(sigma(1.2), [0, 1])
+        self.assert_within(sigma(3.6), [0, 1])
+        # Inside second rectangle.
+        self.assert_within(sigma(1.7), [1, 2])
+        # Middle of inner-most rectangle.
+        self.assertGreaterEqual(sigma(2.5), 2)
 
 
 if __name__ == '__main__':
