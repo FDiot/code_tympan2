@@ -6,7 +6,7 @@ from numpy.testing import assert_allclose
 
 from utils import TympanTC, TEST_PROBLEM_DIR
 
-from tympan import Simulation
+from tympan.simulation import Simulation
 from tympan.altimetry.datamodel import VegetationArea
 from tympan.altimetry import builder
 try:
@@ -185,6 +185,4 @@ class TestProcessAltimetry(TympanTC):
 
 
 if __name__ == '__main__':
-    from utils import main, config_cython_extensions_path
-    config_cython_extensions_path()
-    main()
+    unittest.main()
