@@ -190,10 +190,6 @@ int TYTerrain::fromXML(DOM_Element domElement)
         }
 
         TYXMLTools::getElementIntValue(elemCur, "nbPoints", nbPoints, nbPointsOk);
-        if (nbPointsOk)
-        {
-            _listPoints.reserve(nbPoints);
-        }
 
         if (pt.callFromXMLIfEqual(elemCur))
         {
@@ -229,7 +225,21 @@ void TYTerrain::useVegetation(bool state /*= true*/)
     }
     else
     {
-        if (_pVegetation) { delete _pVegetation; }
-        _pVegetation = NULL;
+        if (_pVegetation) { _pVegetation = nullptr; }
+    }
+}
+
+void TYTerrain::setVegetation(LPTYVegetation pVeget) 
+{ 
+    _pVegetation = pVeget;
+
+    if (_pVegetation != nullptr)
+    {
+        _vegetActive = true;
+        _pVegetation->setParent(this);
+    }
+    else
+    {
+        _vegetActive = false;
     }
 }

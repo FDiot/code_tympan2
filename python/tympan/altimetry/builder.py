@@ -7,50 +7,187 @@ from warnings import warn
 import numpy as np
 from shapely import geometry
 
-from .datamodel import (InconsistentGeometricModel,
-                        elementary_shapes)
+from .datamodel import (InconsistentGeometricModel, elementary_shapes,
+                        SiteNode, LevelCurve, WaterBody, GroundMaterial,
+                        MaterialArea, VegetationArea, InfrastructureLandtake,
+                        SiteLandtake)
 from . import datamodel
 from .merge import recursively_merge_all_subsites
 from .mesh import (ElevationMesh, ReferenceElevationMesh,
-                   Vertex_handle,
                    LandtakeFaceFlooder, MaterialFaceFlooder)
 
 
-class Builder(object):
+# Altimetry side building utilities.
 
-    def __init__(self, mainsite, allow_features_outside_mainsite=True):
-        self.mainsite = mainsite
-        self._allow_outside = allow_features_outside_mainsite
-        self.cleaned = None # The cleaned and merged site
-        self.alti = ReferenceElevationMesh() # Altimetric base
-        self.mesh = None
-        self.vertices_for_feature = {} # List of vertex handle for a given feature
-        self.material_by_face = {}
+def points_to_coords(points):
+    """Return a list of coordinates from given `points` objects (Point3D)"""
+    return [(p.x, p.y) for p in points]
+
+
+def ground_material_from_business(material):
+    """Return a GroundMaterial from a business model material"""
+    return GroundMaterial(material.elem_id, material.resistivity)
+
+
+def build_material_area(ty_materialarea, altimetry_groundmaterial):
+    """Build a MaterialArea in altimetry data model from a Tympan material
+    area and an altimetry GroundMaterial.
+
+    This may be a plain MaterialArea or a VegetationArea.
+    """
+    kwargs = {}
+    if ty_materialarea.has_vegetation():
+        kwargs['height'] = ty_materialarea.vegetation.height
+        kwargs['variety'] = ty_materialarea.vegetation.name()
+        kwargs['foliage'] = ty_materialarea.vegetation.foliage
+        cls = VegetationArea
+    else:
+        cls = MaterialArea
+    return cls(coords=points_to_coords(ty_materialarea.points),
+               material=altimetry_groundmaterial,
+               id=ty_materialarea.elem_id, **kwargs)
+
+
+def build_sitenode(ty_site, mainsite=True):
+    """Build an altimetry SiteNode from a Tympan topography site `ty_site`.
+
+    If `mainsite` is True the site is assumed to be the parent possibly
+    containing sub-sites.
+    """
+    # Site landtake
+    (points, cylcurve) = ty_site.process_landtake()
+    altimetry_site = SiteNode(coords=points_to_coords(points),
+                              id=ty_site.elem_id)
+    if cylcurve is not None:
+        lctype = SiteLandtake if mainsite else LevelCurve
+        if cylcurve.points[0] != cylcurve.points[-1]:
+            warn('main site landtake (or surrounding level curve) does not '
+                 'appear to be closed; closing it for altimetry processing',
+                 RuntimeWarning)
+            close_it = True
+        else:
+            close_it = False
+        alcurve = lctype(
+            coords=points_to_coords(cylcurve.points),
+            altitude=cylcurve.altitude,
+            close_it=close_it,
+            id=cylcurve.elem_id)
+        altimetry_site.add_child(alcurve)
+    # Water bodies
+    water_material = None
+    for cylake in ty_site.lakes:
+        # Build water material
+        cywater = cylake.ground_material
+        alwater = ground_material_from_business(cywater)
+        if not water_material:
+            water_material = cywater.elem_id
+            datamodel.MATERIAL_WATER = alwater
+        allake = WaterBody(
+            coords=points_to_coords(cylake.level_curve.points),
+            altitude=cylake.level_curve.altitude,
+            id=cylake.elem_id)
+        altimetry_site.add_child(allake)
+    # Other material areas
+    default_material = None
+    for cymarea in ty_site.material_areas:
+        # Build a ground material
+        cymaterial = cymarea.ground_material
+        almaterial = ground_material_from_business(cymaterial)
+        # Build a material area made of the above defined ground material
+        if not cymarea.points:
+            assert not default_material, "Found several default materials"
+            default_material = cymaterial.elem_id
+            datamodel.DEFAULT_MATERIAL = almaterial
+            continue
+        almatarea = build_material_area(cymarea, almaterial)
+        altimetry_site.add_child(almatarea)
+    # Level curves
+    for cylcurve in ty_site.level_curves:
+        if len(cylcurve.points) == 1:
+            warn('Level curve %s is made of a single point: ignoring it.' %
+                 cylcurve.elem_id, RuntimeWarning)
+            continue
+        alcurve = LevelCurve(
+            coords=points_to_coords(cylcurve.points),
+            altitude=cylcurve.altitude,
+            id=cylcurve.elem_id)
+        altimetry_site.add_child(alcurve)
+    # Ground contour (infrastructure landtake)
+    for (cy_id, cy_volume_contour) in ty_site.ground_contour.items():
+        infra_landtake = InfrastructureLandtake(
+            coords=points_to_coords(cy_volume_contour),
+            id=cy_id
+            )
+        altimetry_site.add_child(infra_landtake)
+    # Recurse
+    cysubsites = ty_site.subsites
+    for cysbsite in cysubsites:
+        asbsite = build_sitenode(cysbsite, mainsite=False)
+        altimetry_site.add_child(asbsite)
+    return altimetry_site
+
+
+# Altimetry mesh building utilities.
+def build_altimetry(mainsite, allow_features_outside_mainsite=True):
+    """Return the results of altimetry building from a site tree model."""
+    cleaner = recursively_merge_all_subsites(
+        mainsite, allow_outside=allow_features_outside_mainsite)
+    merged_site = cleaner.merged_site()
+    builder = MeshBuilder(merged_site)
+    mesh = builder.build_mesh()
+    filler = MeshFiller(mesh, builder.vertices_for_feature)
+    feature_by_face = filler.fill_material_and_landtakes(mainsite, cleaner)
+    builder.join_with_landtakes(mesh)
+    return merged_site, mesh, feature_by_face
+
+
+def material_by_face(feature_by_face):
+    """Return a material_by_face mapping given a feature_by_face mapping"""
+    m2f = {}
+    for fh, feature in feature_by_face.iteritems():
+        material = feature.material if feature else datamodel.DEFAULT_MATERIAL
+        m2f[fh] = material
+    return m2f
+
+
+class MeshBuilder(object):
+    """Build an elevation mesh from a site cleaner."""
+
+    def __init__(self, site):
+        self._site = site
         self.size_criterion = 0.0 # zero means no size criterion
         self.shape_criterion = 0.125
+        self.vertices_for_feature = {}
 
-    @property
-    def equivalent_site(self):
-        return self.cleaned.equivalent_site
+    def build_mesh(self, refine=True):
+        """Build the mesh and fill the feature to vertices mapping."""
+        # First get an ElevationMesh (possibly with vertices missing altitude,
+        # in order to be able to add non-altimetric features).
+        alti = self._build_altimetric_base()
+        mesh = self._build_triangulation(alti)
+        if refine:
+            # Refine the mesh.
+            # TODO (optional) flood landtake in order to mark them as not to be refined
+            mesh.refine_mesh(size_criterion=self.size_criterion,
+                             shape_criterion=self.shape_criterion)
+        self._compute_informations(mesh)
+        self._compute_elevations(mesh, alti)
+        return mesh
 
-    def complete_processing(self):
-        self.merge_subsites()
-        self.build_altimetric_base()
-        self.build_triangulation()
-        self.refine_triangulation()
-        self.compute_informations()
-        self.compute_elevations()
-        self.fill_material_and_landtakes()
-        self.join_with_landtakes()
+    @staticmethod
+    def _compute_informations(mesh):
+        mesh.update_info_for_vertices()
+        mesh.update_info_for_edges()
 
-    def merge_subsites(self):
-        assert self.cleaned is None
-        self.cleaned = recursively_merge_all_subsites(
-            self.mainsite, allow_outside=self._allow_outside)
+    @staticmethod
+    def _compute_elevations(mesh, altimesh):
+        # From this point, all vertices in the mesh have an altitude.
+        mesh.update_altitude_from_reference(altimesh.point_altitude)
 
-    def insert_feature(self, feature, mesher, **properties):
+    def _insert_feature(self, feature, mesher, **properties):
+        """Insert a `feature` into a mesh."""
         try:
-            shape = self.cleaned.geom[feature.id]
+            shape = self._site.features_by_id[feature.id].shape
         except KeyError:
             # The element was filtered out (e.g. it was outside of its sub-site)
             return None
@@ -73,66 +210,42 @@ class Builder(object):
                 points, id=feature.id, **properties)
         return vertices
 
-    def build_altimetric_base(self):
-        assert self.cleaned is not None
-        assert self.mesh is None
-        for level_curve in self.equivalent_site.level_curves:
+    def _build_altimetric_base(self):
+        """Return an elevation mesh along with a feature to vertices mapping.
+
+        The mesh is built by walking the equivalent site for level curves *only*.
+        """
+        alti = ReferenceElevationMesh() # Altimetric base
+        for level_curve in self._site.level_curves:
             props = level_curve.build_properties()
             assert 'altitude' in props
-            vertices = self.insert_feature(level_curve, self.alti, **props)
+            vertices = self._insert_feature(level_curve, alti, **props)
             self.vertices_for_feature[level_curve.id] = vertices
-        self.alti.update_info_for_vertices()
-        self.mesh = self.alti.copy_as_ElevationMesh()
+        alti.update_info_for_vertices()
+        return alti
 
-    def build_triangulation(self):
-        assert self.mesh is not None
-        for feature in self.equivalent_site.non_altimetric_features:
-            vertices = self.insert_feature(feature, self.mesh,
-                                           **feature.build_properties())
+    def _copy_mesh(self, altimesh):
+        """Return a copy of reference altimetry mesh and update
+        vertices_for_feature map.
+        """
+        vmap = {}
+        mesh = altimesh.copy(class_=ElevationMesh, vmap=vmap)
+        for fid, vertices in self.vertices_for_feature.items():
+            self.vertices_for_feature[fid] = [vmap[vh] for vh in vertices]
+        return mesh
+
+    def _build_triangulation(self, altimesh):
+        """Return an elevation mesh, copied from the base mesh with non
+        altimetric features inserted.
+        """
+        mesh = self._copy_mesh(altimesh)
+        for feature in self._site.non_altimetric_features:
+            vertices = self._insert_feature(feature, mesh,
+                                            **feature.build_properties())
             self.vertices_for_feature[feature.id] = vertices
+        return mesh
 
-    def refine_triangulation(self):
-        # TODO (optional) flood landtake in order to mark them as not to be refined
-        self.mesh.refine_mesh(size_criterion=self.size_criterion,
-                              shape_criterion=self.shape_criterion)
-
-    def compute_informations(self):
-        self.mesh.update_info_for_vertices()
-        self.mesh.update_info_for_edges()
-
-    def compute_elevations(self):
-        self.mesh.update_altitude_from_reference(self.alti.point_altitude)
-
-    def fill_polygonal_feature(self, feature, flooder_class):
-        assert self.mesh is not None
-        if feature.id not in datamodel.SiteNode.recursive_features_ids(self.mainsite):
-            raise ValueError("Only features already inserted can be filled ID:%s"
-                             % feature.id)
-        vertices = self.vertices_for_feature[feature.id]
-        close_it = vertices[0] != vertices[-1]
-        flooder = self.mesh.flood_polygon(flooder_class, vertices,
-                                          close_it=close_it)
-        affected_faces =[fh for fh in flooder.visited
-                         if fh not in self.material_by_face]
-        for fh in affected_faces:
-            self.material_by_face[fh] = feature.material
-        return affected_faces
-
-    def fill_material_and_landtakes(self):
-        assert self.mesh is not None
-        assert len(self.material_by_face)==0
-        for landtake in self.mainsite.landtakes:
-            self.fill_polygonal_feature(landtake,
-                                        flooder_class=LandtakeFaceFlooder)
-        for material_area_id in self.cleaned.material_areas_inner_first():
-            material_area = self.equivalent_site.features_by_id[material_area_id]
-            self.fill_polygonal_feature(material_area,
-                                        flooder_class=MaterialFaceFlooder)
-        for fh in self.mesh.cdt.finite_faces():
-            if fh not in self.material_by_face:
-                self.material_by_face[fh] = datamodel.DEFAULT_MATERIAL
-
-    def join_with_landtakes(self):
+    def join_with_landtakes(self, mesh):
         """Join the altimetry to the landtakes.
 
         For each infrastructure land-take, compute the mean altitude of the
@@ -148,107 +261,63 @@ class Builder(object):
         NB: This has the restriction that building in a strong slopes
         are not well supported: they produce artifact in the altimetry.
         """
-        for landtake in self.equivalent_site.landtakes:
+        for landtake in self._site.landtakes:
             polyline = self.vertices_for_feature[landtake.id]
-            mean_alt = np.mean([self.mesh.vertices_info[vh].altitude
+            mean_alt = np.mean([mesh.vertices_info[vh].altitude
                                 for vh in polyline])
             close_it = polyline[0] != polyline[-1]
-            contour_vertices = self.mesh.iter_vertices_for_input_polyline(
+            contour_vertices = mesh.iter_vertices_for_input_polyline(
                 polyline, close_it=close_it)
-            flooder = self.mesh.flood_polygon(LandtakeFaceFlooder, polyline,
-                                              close_it=close_it)
+            flooder = mesh.flood_polygon(LandtakeFaceFlooder, polyline,
+                                         close_it=close_it)
             inside_vertices = set((fh.vertex(i) for fh in flooder.visited
                                    for i in xrange(3)))
             for vh in chain(contour_vertices, inside_vertices):
-                self.mesh.vertices_info[vh].altitude = mean_alt
+                mesh.vertices_info[vh].altitude = mean_alt
 
-    def build_mesh_data(self):
-        """Process mesh from the CDT and materials data and return numpy
-        arrays (except for `materials` which is a list of list) suitable for
-        export to a .ply file.
-        """
-        vertices, vertices_id = [], {}
-        for idx, vh in enumerate(self.mesh.cdt.finite_vertices()):
-            vertices_id[vh] = idx
-            point = self.mesh.point3d_for_vertex(vh)
-            vertices.append((point.x(), point.y(), point.z()))
-        vertices = np.array(vertices)
-        materials, materials_id = [], {}
-        for fh, mat in self.material_by_face.iteritems():
-            matid = map(ord, mat.id)
-            if matid not in materials:
-                materials.append(matid)
-            idx = materials.index(matid)
-            materials_id[fh] = idx
-        faces, faces_materials = [], []
-        for fh in self.mesh.cdt.finite_faces():
-            faces.append([vertices_id[fh.vertex(i)] for i in range(3)])
-            faces_materials.append(materials_id[fh])
-        faces = np.array(faces)
-        faces_materials = np.array(faces_materials)
-        return vertices, faces, materials, faces_materials
 
-    def export_to_ply(self, fname, color_faces=True):
-        """Export mesh data to a PLY file.
+class MeshFiller(object):
+    """Fill a mesh with material information"""
 
-        `color_faces` option adds colors to mesh faces, mostly for visual
-        debug.
-        """
-        vertices, faces, materials, faces_materials = self.build_mesh_data()
-        header = self._ply_headers(color_faces=color_faces)
-        with open(fname, 'w') as f:
-            f.write(header.format(nvertices=vertices.shape[0],
-                                  nfaces=faces.shape[0],
-                                  nmaterials=len(materials)))
-            np.savetxt(f, vertices, fmt='%.18g', newline='\r\n')
-            # Insert a leading column with the number of face vertices and a
-            # trailing one with face material.
-            fcols = [np.ones((faces.shape[0], 1)) * faces.shape[1],
-                     faces, faces_materials[:, np.newaxis]]
-            if color_faces:
-                # Then add faces colors.
-                fcols.append(self._color_faces(faces_materials))
-            np.savetxt(f, np.concatenate(fcols, axis=1), fmt='%d',
-                       newline='\r\n')
-            # Write materials.
-            for matid in materials:
-                n = len(matid)
-                f.write(('{}' + (' {}' * n) + '\r\n').format(n, *matid))
+    def __init__(self, mesh, vertices_for_feature):
+        self._mesh = mesh
+        self._vertices_for_feature = vertices_for_feature
+
+    def fill_material_and_landtakes(self, mainsite, cleaner):
+        """Build the face to geometrical feature mapping."""
+        feature_by_face = {}
+
+        def fill_feature(feature, floodercls):
+            """Update feature_by_face with feature's faces using specified
+            flooder.
+            """
+            self._check_feature_inserted(feature, mainsite)
+            faces = self._faces_for_polygonal_feature(
+                feature, flooder_class=floodercls)
+            for fh in faces:
+                if fh not in feature_by_face:
+                    feature_by_face[fh] = feature
+
+        for landtake in mainsite.landtakes:
+            fill_feature(landtake, LandtakeFaceFlooder)
+        for material_area_id in cleaner.material_areas_inner_first():
+            material_area = cleaner.equivalent_site.features_by_id[material_area_id]
+            fill_feature(material_area, MaterialFaceFlooder)
+        for fh in self._mesh.cdt.finite_faces():
+            if fh not in feature_by_face:
+                feature_by_face[fh] = None
+        return feature_by_face
 
     @staticmethod
-    def _ply_headers(color_faces=True):
-        """Generate PLY file header for mesh export"""
-        faces_headers = ['element face {nfaces}',
-                         'property list uchar int vertex_indices',
-                         'property int material_index']
-        if color_faces:
-            faces_headers += ['property uchar red',
-                              'property uchar green',
-                              'property uchar blue']
-        headers = (['ply',
-                    'format ascii 1.0',
-                    'element vertex {nvertices}',
-                    'property float x',
-                    'property float y',
-                    'property float z'] +
-                   faces_headers +
-                   ['element material {nmaterials}',
-                    'property list uchar uchar id',
-                    'end_header'])
-        return '\r\n'.join(headers) + '\r\n'
+    def _check_feature_inserted(feature, site):
+        if feature.id not in datamodel.SiteNode.recursive_features_ids(site):
+            raise ValueError("Only features already inserted can be filled ID:%s"
+                             % feature.id)
 
-    @staticmethod
-    def _color_faces(faces_materials):
-        """Return an array of shape (nfaces, 3) with colors for mesh faces
-        according to their material.
-        """
-        faces_colors = np.zeros((faces_materials.shape[0], 3))
-        try:
-            from matplotlib import cm
-        except ImportError:
-            return faces_colors
-        cmap = cm.get_cmap('jet')
-        materials, indices = np.unique(faces_materials, return_inverse=True)
-        nmats = len(materials)
-        colors = cmap(np.arange(nmats) / float(nmats - 1), bytes=True)[:, :-1]
-        return colors[indices, :]
+    def _faces_for_polygonal_feature(self, feature, flooder_class):
+        """Return the list of faces within a polygonal feature"""
+        vertices = self._vertices_for_feature[feature.id]
+        close_it = vertices[0] != vertices[-1]
+        flooder = self._mesh.flood_polygon(flooder_class, vertices,
+                                           close_it=close_it)
+        return flooder.visited

@@ -1,8 +1,8 @@
 import os
 import tempfile
 
-from utils import TympanTC, no_output
-from tympan.models.business import Project
+from utils import TympanTC
+from tympan.models.project import Project
 
 class TestSolverConfig(TympanTC):
 
@@ -15,14 +15,13 @@ class TestSolverConfig(TympanTC):
                 tata=0
             ''')
         # Open a basic project that doesn't have solver parameters
-        (project, _) = self.load_project('', 'empty_site.xml')
+        project = self.load_project('', 'empty_site.xml')
         # Set a custom solver configuration to it
         project.current_computation.solver_parameters = config
         # Export to XML and reimport it
         with tempfile.NamedTemporaryFile(suffix='.xml', delete=False) as f:
             project.to_xml(f.name)
-            with no_output():
-                configured_project = Project.from_xml(f.name)
+            configured_project = Project.from_xml(f.name)
             # Check configuration didn't disappear
             self.assertEqual(configured_project.current_computation.solver_parameters,
                              config)
@@ -31,5 +30,5 @@ class TestSolverConfig(TympanTC):
 
 
 if __name__ == '__main__':
-    from utils import main
-    main()
+    import unittest
+    unittest.main()

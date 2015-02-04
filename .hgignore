@@ -42,5 +42,8 @@ lib\*
 *.orig
 *.lnk
 *.rej
-*.patch
-
+python/tympan/.spyderproject
+tests/desktop.ini
+python/.spyderworkspace
+python/bin/.spyderproject
+python/tests/.spyderproject

@@ -5,58 +5,68 @@
 import cython as cy
 
 import numpy as np
+cimport numpy as np
 
-from tympan.models cimport common as tycommon
-from tympan.core cimport unique_ptr, shared_ptr
+from tympan.models cimport _common as tycommon
+from tympan._core cimport unique_ptr, shared_ptr
+
 
 cdef class ProblemModel:
+    """Solver model"""
 
     def __cinit__(self):
         self.thisptr = shared_ptr[AcousticProblemModel](new AcousticProblemModel())
 
     @property
     def npoints(self):
-        """ Return the number of mesh nodes contained in the acoustic problem
-            model
-        """
+        """Return the number of mesh nodes of the model"""
         assert self.thisptr.get() != NULL
         return self.thisptr.get().npoints()
 
     @property
     def ntriangles(self):
-        """ Return the number of mesh triangles contained in the acoustic problem
-            model
-        """
+        """Return the number of mesh triangles of the model"""
         assert self.thisptr.get() != NULL
         return self.thisptr.get().ntriangles()
 
     @property
     def nmaterials(self):
-        """ Return the number of acoustic materials contained in the acoustic
-            problem model
-        """
+        """Return the number of acoustic materials of the model"""
         assert self.thisptr.get() != NULL
         return self.thisptr.get().nmaterials()
 
+    @cy.locals(spectrum_values=np.ndarray)
+    def _add_source(self, position, spectrum_values, shift):
+        """Add an acoustic source to the model"""
+        # position
+        pos = cy.declare(tycommon.OPoint3D)
+        pos = tycommon.OPoint3D(position[0], position[1], position[2])
+        # spectrum
+        nb_val = spectrum_values.shape[0]
+        spec = cy.declare(tycommon.OSpectre)
+        spec = tycommon.OSpectre(<double *> spectrum_values.data, nb_val, shift)
+        spec.setEtat(tycommon.SPECTRE_ETAT_DB)
+        spec.setType(tycommon.SPECTRE_TYPE_LW)
+        # directivity
+        pdirectivity = cy.declare(cy.pointer(SourceDirectivityInterface))
+        pdirectivity = new SphericalSourceDirectivity()
+        source_idx = self.thisptr.get().make_source(pos, spec.toGPhy(), pdirectivity)
+        return source_idx
+
     @property
     def nsources(self):
-        """ Return the number of acoustic sources involved in the acoustic
-            problem model
-        """
+        """Return the number of acoustic sources involved in the model"""
         assert self.thisptr.get() != NULL
         return self.thisptr.get().nsources()
 
     @property
     def nreceptors(self):
-        """ Return the number of acoustic receptors involved in the acoustic
-            problem model
-        """
+        """Return the number of acoustic receptors involved in the model"""
         assert self.thisptr.get() != NULL
         return self.thisptr.get().nreceptors()
 
     def source(self, idx):
-        """ Return the acoustic source (SolverSource object) of index 'idx'
-        """
+        """Return the acoustic source (SolverSource object) of index 'idx'"""
         assert self.thisptr.get() != NULL
         source = SolverSource()
         source.thisptr = cy.address(self.thisptr.get().source(idx))
@@ -64,8 +74,7 @@ cdef class ProblemModel:
 
     @property
     def sources(self):
-        """ Return all the acoustic sources of the model
-        """
+        """Return all the acoustic sources of the model"""
         assert self.thisptr.get() != NULL
         sources = []
         for i in xrange(self.nsources):
@@ -75,7 +84,7 @@ cdef class ProblemModel:
         return sources
 
     def receptor(self, idx):
-        """ Return the acoustic receptor (SolverReceptor object) of index 'idx'
+        """Return the acoustic receptor (SolverReceptor object) of index 'idx'
         """
         assert self.thisptr.get() != NULL
         receptor = SolverReceptor()
@@ -84,8 +93,7 @@ cdef class ProblemModel:
 
     @property
     def receptors(self):
-        """ Return all the acoustic receptors of the model
-        """
+        """Return all the acoustic receptors of the model"""
         assert self.thisptr.get() != NULL
         receptors = []
         for i in xrange(self.nreceptors):
@@ -94,15 +102,8 @@ cdef class ProblemModel:
             receptors.append(receptor)
         return receptors
 
-    def export_triangular_mesh(self):
-        """ Build a triangular mesh from the acoustic problem model.
-            Return two nparrays:
-                * 'nodes': an array of nodes (of dimension 'npoints'X3), where
-                each line stands for a node and contains 3 coordinates)
-                * 'triangles': an array of triangles (of dimension 'ntriangles'X3),
-                where each line stands for a triangle and contains the indices of
-                its 3 vertices in the 'nodes' array.
-        """
+    def _export_triangular_mesh(self):
+        """Build a triangular mesh from the acoustic problem model"""
         assert self.thisptr.get() != NULL
         nb_elts = cy.declare(cy.uint)
         actri = cy.declare(cy.pointer(AcousticTriangle))
@@ -121,16 +122,38 @@ cdef class ProblemModel:
 
 
 cdef class ResultModel:
+    """Results of a computation ran by a solver on a solver model"""
+
     def __cinit__(self):
         self.thisptr = shared_ptr[AcousticResultModel](new AcousticResultModel())
+
+    def spectrum(self, id_receptor, id_source):
+        """Return the power spectrum received by a receptor from a source
+        """
+        spec = cy.declare(tycommon.OSpectre)
+        spec = self.thisptr.get().get_data().element(id_receptor, id_source)
+        return tycommon.ospectre2spectrum(spec)
 
 
 cdef class Solver:
 
-    def solve_problem(self, ProblemModel problem, ResultModel result):
-        return self.thisptr.solve(problem.thisptr.get()[0], result.thisptr.get()[0])
+    @cy.locals(model=ProblemModel)
+    @cy.returns((bool, ResultModel))
+    def solve_problem(self, model):
+        """Run a computation based on the solver model given in argument
+
+        Raises a RuntimeError in case of computation failure.
+        """
+        result = ResultModel()
+        if not self.thisptr.solve(model.thisptr.get()[0],
+                                  result.thisptr.get()[0]):
+            raise RuntimeError(
+                'Computation failed (C++ SolverInterface::solve() method '
+                'returned false)')
+        return result
 
     def purge(self):
+        """Purge solver from its previous results"""
         self.thisptr.purge()
 
 
@@ -142,17 +165,20 @@ cdef class SolverSource:
 
     @property
     def position(self):
-        """ Return the acoustic source position (as a 'Point3D' object)
-        """
+        """Return the acoustic source position (as a 'Point3D' object)"""
         assert self.thisptr != NULL
         return tycommon.opoint3d2point3d(self.thisptr.position)
 
     @property
     def spectrum(self):
-        """ Return the acoustic spectrum of the Source (dB scale, power spectrum)
+        """Return the acoustic spectrum of the Source (dB scale, power spectrum)
         """
         assert self.thisptr != NULL
         return tycommon.ospectre2spectrum(self.thisptr.spectrum)
+
+    def value(self, freq):
+        """The spectrum value corresponding to the 'freq' frequency (linear, power)"""
+        return self.thisptr.spectrum.getValueReal(freq)
 
 
 cdef class SolverReceptor:
@@ -163,8 +189,7 @@ cdef class SolverReceptor:
 
     @property
     def position(self):
-        """ Return the acoustic source position (as a 'Point3D' object)
-        """
+        """Return the acoustic source position (as a 'Point3D' object)"""
         assert self.thisptr != NULL
         return tycommon.opoint3d2point3d(self.thisptr.position)
 

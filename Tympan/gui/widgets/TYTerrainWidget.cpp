@@ -68,14 +68,9 @@ TYTerrainWidget::TYTerrainWidget(TYTerrain* pElement, QWidget* _pParent /*=NULL*
     _solW = new TYSolWidget(getElement()->getSol(), _tabWidget);
     _tabWidget->insertTab(1, _solW, TR("id_sol"));
 
-    if (getElement()->isUsingVegetation() && getElement()->getVegetation() != nullptr)
-    {
-        _vegetationWidget = new TYVegetationWidget(getElement()->getVegetation(), _tabWidget);
-    }
-    else
-    {
-        _vegetationWidget = new TYVegetationWidget(getElement()->getVegetation(), _tabWidget);
-    }
+    _pVegetation = getElement()->getVegetation();
+    _vegetationWidget = new TYVegetationWidget(_pVegetation, _tabWidget);
+
     _tabWidget->insertTab(2, _vegetationWidget, TR("id_vegetation"));
 
     _groupBox = new QGroupBox(_tabWidget);
@@ -112,6 +107,7 @@ void TYTerrainWidget::updateContent()
     bool bVegActive = getElement()->isUsingVegetation();
     _checkBoxVegetActive->setChecked(bVegActive);
     _vegetationWidget->setEnabled(bVegActive);
+    _vegetationWidget->updateContent();
 
     _tabPoints->update();
 }
@@ -121,13 +117,9 @@ void TYTerrainWidget::apply()
     _elmW->apply();
     _colorW->apply();
     _solW->apply();
-   getElement()->useVegetation(_checkBoxVegetActive->isChecked());
+    _vegetationWidget->apply();
 
-   if ( (getElement()->isUsingVegetation()) && 
-        (_pVegetation != nullptr) )
-   {
-       getElement()->setVegetation(_pVegetation);
-   }
+    getElement()->setVegetation(_pVegetation);
 
     _tabPoints->apply();
 
@@ -148,8 +140,6 @@ void TYTerrainWidget::disableVegetationWidget()
 
 void TYTerrainWidget::useVegetation()
 {
-    getElement()->useVegetation(_checkBoxVegetActive->isChecked());
-
     if (_checkBoxVegetActive->isChecked())
     {
         _pVegetation = getElement()->getVegetation();
@@ -159,10 +149,14 @@ void TYTerrainWidget::useVegetation()
         {
             _pVegetation = new TYVegetation();
         }
-
-        _vegetationWidget->setElement(_pVegetation);
-        _vegetationWidget->update();
-        _vegetationWidget->setEnabled(_checkBoxVegetActive->isChecked());
     }
+    else
+    {
+        _pVegetation = nullptr;
+    }
+
+    _vegetationWidget->setElement(_pVegetation);
+    _vegetationWidget->updateContent();
+    _vegetationWidget->setEnabled(_checkBoxVegetActive->isChecked());
 }
 

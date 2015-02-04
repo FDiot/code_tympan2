@@ -8,6 +8,7 @@ of all the site note of a compound site to build a single site.
 
 
 from collections import defaultdict
+from copy import copy
 
 from shapely import geometry
 from . datamodel import SiteNode, InconsistentGeometricModel, SiteLandtake
@@ -82,6 +83,7 @@ class SiteNodeGeometryCleaner(object):
         self.erroneous_overlap = []
         self._sorted_material_areas = []
         self.equivalent_site = SiteNode(sitenode.build_coordinates()[0], id=None)
+        self.equivalent_site._cleaner = self # For tests.
 
     def _add_feature_with_new_shape(self, feature, shape):
         assert not isinstance(feature, SiteNode)
@@ -95,6 +97,16 @@ class SiteNodeGeometryCleaner(object):
 
     def feature_from_id(self, id):
         return self.equivalent_site.features_by_id[id]
+
+    def merged_site(self):
+        """Return the merged site"""
+        merged_site = SiteNode(self.sitenode.build_coordinates()[0],
+                               id=self.sitenode.id)
+        for feature_id, shape in self.geom.iteritems():
+            feature = copy(self.feature_from_id(feature_id))
+            feature.set_shape(shape)
+            merged_site.add_child(feature)
+        return merged_site
 
     def __getitem__(self, feature_id):
         return self.geom[feature_id], self.feature_from_id(feature_id).build_properties()
@@ -196,7 +208,7 @@ class SiteNodeGeometryCleaner(object):
 
     def check_issues_with_material_area_order(self):
         """ Diagnostic helper: returns violation of the ordering for material area"""
-        problems = []
+        problems = set([])
         for i, area_i_id in enumerate(self._sorted_material_areas):
             for j in xrange(i+1, len(self._sorted_material_areas)):
                 area_j_id = self._sorted_material_areas[j]
@@ -204,8 +216,8 @@ class SiteNodeGeometryCleaner(object):
                 area_j_geom = self.geom[area_j_id]
                 if not (area_i_geom.within(area_j_geom) or
                         area_i_geom.disjoint(area_j_geom)):
-                    problems.append((area_id, ))
-        return problems
+                    problems.add((area_i_id, area_j_id))
+        return list(problems)
 
     def material_areas_inner_first(self):
         return list(self._sorted_material_areas)

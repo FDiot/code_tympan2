@@ -5,9 +5,9 @@ from libcpp cimport bool
 from libcpp.string cimport string
 from libcpp.vector cimport vector
 
-from tympan.models.common cimport (OPoint3D, OSpectre, OSpectreComplex, OVector3D,
-                                   SpectrumMatrix)
-from tympan.core cimport SolverInterface#, SmartPtr, shared_ptr
+from tympan._core cimport SolverInterface
+from tympan.models._common cimport (OPoint3D, OSpectre, OSpectreComplex,
+                                    OVector3D, SpectrumMatrix)
 
 # XXX importing SmartPtr and shared_ptr from tympan.core set a cyclical dependency
 # between tympan.core and tympan.models.solver, since tympan.core declares
@@ -17,6 +17,7 @@ cdef extern from "boost/shared_ptr.hpp" namespace "boost":
         shared_ptr(T*)
         shared_ptr()
         T *get()
+
 cdef extern from "Tympan/core/smartptr.h":
     cdef cppclass SmartPtr[T]:
         SmartPtr()

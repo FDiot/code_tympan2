@@ -6,9 +6,9 @@ from libcpp.deque cimport deque
 from libcpp cimport bool
 from libcpp.map cimport map as cppmap
 
-from tympan.core cimport QString, SmartPtr, OGenID, SolverInterface
-from tympan.models cimport common as tycommon
-from tympan.models cimport solver as tysolver
+from tympan._core cimport QString, SmartPtr, OGenID, SolverInterface
+from tympan.models cimport _common as tycommon
+from tympan.models cimport _solver as tysolver
 
 
 cdef extern from "Tympan/models/business/xml_project_util.h" namespace "tympan":
@@ -60,6 +60,7 @@ cdef extern from "Tympan/models/business/TYElement.h":
     TYUserSourcePonctuelle* downcast_user_source_ponctuelle "downcast<TYUserSourcePonctuelle>"(TYElement *)
     TYMaillage* downcast_maillage "downcast<TYMaillage>"(TYElement *)
     TYPointControl* downcast_point_control "downcast<TYPointControl>"(TYElement *)
+    TYPointCalcul* downcast_point_calcul "downcast<TYPointCalcul>"(TYElement *)
     TYCourbeNiveau* downcast_courbe_niveau "downcast<TYCourbeNiveau>"(TYElement*)
     TYPlanEau* downcast_plan_eau "downcast<TYPlanEau>"(TYElement*)
     TYTerrain* downcast_terrain "downcast<TYTerrain>"(TYElement*)
@@ -86,6 +87,7 @@ cdef extern from "Tympan/models/business/TYResultat.h":
         tycommon.SpectrumMatrix& getResultMatrix()
         void setSources(cppmap[TYElem_ptr, int])
         void addRecepteur(TYPointCalcul* pRecepteur)
+        int getIndexRecepteur(TYPointCalcul* pRecepteur)
 
 cdef extern from "Tympan/models/business/acoustic/TYDirectivity.h" namespace "TYComputedDirectivity":
     cdef enum DirectivityType:
@@ -190,6 +192,7 @@ cdef extern from "Tympan/models/business/TYPointCalcul.h":
         bool getEtat(TYCalcul* pCalcul)
         void setSpectre(const TYSpectre& spectre, TYCalcul* pCalcul)
         TYSpectre* getSpectre(TYCalcul* pCalcul)
+        double getValA()
 
 cdef extern from "Tympan/models/business/TYPointControl.h":
     cdef cppclass TYPointControl (TYPointCalcul):
@@ -205,6 +208,8 @@ cdef extern from "Tympan/models/business/topography/TYTerrain.h":
     cdef cppclass TYTerrain(TYElement):
         SmartPtr[TYSol] getSol()
         const vector[TYPoint]& getListPoints() const
+        bool isVegetActive()
+        SmartPtr[TYVegetation] getVegetation()
 
 cdef extern from "Tympan/models/business/topography/TYPlanEau.h":
     cdef cppclass TYPlanEau(TYTerrain):
@@ -213,6 +218,11 @@ cdef extern from "Tympan/models/business/topography/TYPlanEau.h":
 cdef extern from "Tympan/models/business/material/TYSol.h":
     cdef cppclass TYSol (TYElement):
         double getResistivite()
+
+cdef extern from "Tympan/models/business/material/TYVegetation.h":
+    cdef cppclass TYVegetation (TYElement):
+        double getHauteur()
+        bool getFoliageStatus()
 
 cdef extern from "Tympan/models/business/infrastructure/TYTopographie.h":
     cdef cppclass TYTopographie (TYElement):
@@ -247,6 +257,9 @@ cdef class Material:
 
 cdef class Ground:
     cdef SmartPtr[TYSol] thisptr
+
+cdef class Vegetation:
+    cdef SmartPtr[TYVegetation] thisptr
 
 cdef pointcalcul2receptor(SmartPtr[TYPointCalcul] ptcalc)
 cdef typrojet2project(TYProjet* proj)

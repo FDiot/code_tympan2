@@ -170,10 +170,6 @@ int TYCourbeNiveau::fromXML(DOM_Element domElement)
         TYXMLTools::getElementBoolValue(elemCur, "closed", _closed, closedOk);
         TYXMLTools::getElementDoubleValue(elemCur, "distmaxpts", _distMax, distMaxOk);
         TYXMLTools::getElementIntValue(elemCur, "nbPoints", nbPoints, nbPointsOk);
-        if (nbPointsOk)
-        {
-            _listPoints.reserve(nbPoints);
-        }
 
         if (pt.callFromXMLIfEqual(elemCur))
         {
@@ -369,7 +365,6 @@ LPTYCourbeNiveau TYCourbeNiveau::split(const TYPoint& pt)
 
     // find an iterator to the closest point
     TYTabPoint::iterator iterP = getPointRef(pt);
-    if (iterP._Ptr == nullptr) { return pCurve; } 
 
     // Cas d'une courbe fermee
     if ( _closed )

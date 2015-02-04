@@ -5,19 +5,18 @@ from collections import defaultdict
 import copy
 from warnings import warn
 
-from shapely import geometry as sh_geom
+import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline
+from shapely.geometry import Point, LineString
 
 from CGAL.CGAL_Kernel import (
-    Point_2 as Point,
-    Vector_2 as Vector,
-    Triangle_2 as Triangle,
+    Point_2,
     Segment_2 as Segment,
     Point_3,
     Vector_3,
     Triangle_3,
     Line_3,
     Ref_int,
-    Object as CGAL_Object,
     centroid,
     intersection)
 from CGAL.CGAL_Mesh_2 import (
@@ -48,13 +47,13 @@ UNSPECIFIED_ALTITUDE = float('nan')
 UNSPECIFIED_MATERIAL = None
 
 def to_cgal_point(pt):
-    if isinstance(pt, Point):
+    if isinstance(pt, Point_2):
         return pt
-    elif isinstance(pt, sh_geom.Point):
-        return Point(pt.x, pt.y)
+    elif isinstance(pt, Point):
+        return Point_2(pt.x, pt.y)
     elif isinstance(pt, (tuple, list)):
         assert len(pt) == 2
-        return Point(*pt)
+        return Point_2(*pt)
     else:
         raise TypeError("Don't know how to make a CGAL Point_2 from", pt)
 
@@ -84,8 +83,8 @@ def ilinks(it, close_it=False):
         yield (prev, first)
 
 class MeshedCDTWithInfo(object):
-    """
-    This call provide the meshing of a geometry with arbitrary informations attached
+    """ This class provides the meshing of a geometry with arbitrary
+    information attached.
     """
     EdgeInfo = dict
     VertexInfo = dict
@@ -94,9 +93,6 @@ class MeshedCDTWithInfo(object):
         self.cdt = CDT()
         self._input_vertices_infos = {}
         self._input_constraints_infos = {}
-
-    def clear_caches(self):
-        pass
 
     def vertices_map_to_other_mesh(self, other_mesh):
         vmap = {}
@@ -125,7 +121,7 @@ class MeshedCDTWithInfo(object):
 
         And if a copy of self as an other type is desired, the class_ argument
         provides for specifying the desired type. USE WITH CAUTION, this
-        option is mainly aimed at internal use for copy_as_ElevationMesh.
+        option is mainly aimed at internal use for with ElevationMesh.
         """
         vmap = {} if vmap is None else vmap
         if len(vmap) != 0:
@@ -171,13 +167,11 @@ class MeshedCDTWithInfo(object):
         return self._input_vertices_infos[v]
 
     def insert_constraint(self, va, vb, **kwargs):
-        self.clear_caches()
         self.cdt.insert_constraint(va, vb)
         self._input_constraints_infos[sorted_vertex_pair(va, vb)] = self.EdgeInfo(**kwargs)
         return (va, vb) # Important to return the contrain in the input order
 
     def insert_point(self, point, **kwargs):
-        self.clear_caches()
         point = to_cgal_point(point)
         vertex = self.cdt.insert(point)
         self._input_vertices_infos[vertex] = self.VertexInfo(**kwargs)
@@ -513,6 +507,80 @@ class MeshedCDTWithInfo(object):
             assert locate_type == OUTSIDE_AFFINE_HULL
             raise InconsistentGeometricModel("Degenerate triangulation (0D or 1D)")
 
+    # Export utilities.
+    def as_arrays(self):
+        """Return vertices and faces as Numpy arrays."""
+        vertices, vertices_id = [], {}
+        for idx, vh in enumerate(self.cdt.finite_vertices()):
+            vertices_id[vh] = idx
+            point = self.point3d_for_vertex(vh)
+            vertices.append((point.x(), point.y(), point.z()))
+        faces = [[vertices_id[fh.vertex(i)] for i in range(3)]
+                 for fh in self.cdt.finite_faces()]
+        return np.array(vertices), np.array(faces)
+
+    def faces_material(self, material_by_face):
+        """Return the list of faces' material given a `material_by_face`
+        mapping.
+        """
+        return [material_by_face[fh] for fh in self.cdt.finite_faces()]
+
+    def segment_intersection_points(self, segment):
+        """Return the list of intersection points between the mesh CDT and a
+        segment. This is list sorted according to the distance of points to
+        the origin (first point) of the segment and only contains unique
+        points.
+        """
+        if not isinstance(segment, LineString):
+            segment = LineString(segment)
+        points = list(self._segment_intersection_points(segment))
+        # Sort points by distance to the segment origine.
+        def closer_to_segment_origine(x, y):
+            dist = Point(segment.coords[0]).distance
+            if dist(x) > dist(y):
+                return 1
+            elif dist(x) < dist(y):
+                return -1
+            else:
+                return 0
+        points.sort(cmp=closer_to_segment_origine)
+        # Eliminate identical adjacent points.
+        if len(points) < 2:
+            return points
+        points =  [p for i, p in enumerate(points)
+                   if not p.equals(points[i-1])]
+        return points
+
+    def _segment_intersection_points(self, segment):
+        """Yield interection points between the mesh CDT and a segment."""
+        for fh in self.cdt.finite_faces():
+            triangle = self._face_triangle(fh)
+            inter = triangle.intersection(segment)
+            if not inter:
+                # No intersection.
+                continue
+            try:
+                inter = iter(inter)
+            except TypeError:
+                # Got a single Point or a LineString.
+                if isinstance(inter, Point):
+                    yield inter
+                elif isinstance(inter, LineString):
+                    for coord in inter.coords:
+                        yield Point(coord)
+                else:
+                    raise Exception('unhandled interection object %r' % inter)
+            else:
+                # Got a collection of points.
+                for i in inter:
+                    assert isinstance(i, Point), i
+                    yield i
+
+    def _face_triangle(self, fh):
+        """Return a shapely geometry LineString for given face."""
+        return LineString([self.py_vertex(fh.vertex(i % 3))
+                           for i in xrange(4)])
+
 
 class InfoWithIDsAndAltitude(object):
     ALTITUDE_TOLERANCE = 0.1
@@ -595,11 +663,6 @@ class ElevationMesh(MeshedCDTWithInfo):
         super(ElevationMesh, self).__init__()
         self.vertices_info = defaultdict(self.VertexInfo)
         self.edges_info = defaultdict(self.EdgeInfo)
-        self._init_vertices_info_from_input()
-
-    def _init_vertices_info_from_input(self):
-        for vh, info in self._input_vertices_infos.iteritems():
-            self.vertices_info[vh] = info # TODO Consider copying ?
 
     def copy(self, class_=None, deep=False, vmap=None):
         vmap = {} if vmap is None else vmap
@@ -613,11 +676,6 @@ class ElevationMesh(MeshedCDTWithInfo):
             dest_info = copy.deepcopy(orig_info) if deep else copy.copy(orig_info)
             newone.edges_info[(dest_va, dest_vb)] = dest_info
         return newone
-
-    def clear_caches(self):
-        self.vertices_info.clear()
-        self.edges_info.clear()
-        self._init_vertices_info_from_input()
 
     def insert_point(self, point, **kwargs):
         vh = super(ElevationMesh, self).insert_point(point, **kwargs)
@@ -652,6 +710,40 @@ class ElevationMesh(MeshedCDTWithInfo):
         d = self.merge_info_for_edges(
             merge_function, edges=edges, init_map=self.edges_info)
         self.edges_info.update(d)
+
+    def altitude_for_input_vertex(self, vh):
+        alti = self.input_vertex_infos(vh).altitude
+        assert alti is not UNSPECIFIED_ALTITUDE, \
+            'vertex {} has no altitude specified'.format(self.py_vertex(vh))
+        return alti
+
+    def point_altitude(self, p, face_hint=None):
+        p = to_cgal_point(p)
+        fh, vh_or_i = self.locate_point(p, face_hint=face_hint)
+        if fh is None: # point p is out of the convex hull of the triangulation
+            return UNSPECIFIED_ALTITUDE
+        if (isinstance(vh_or_i, Vertex_handle)
+                and vh_or_i in self._input_vertices_infos):
+            # Point is on a vertex, which is part of an input constraint.
+            return self.altitude_for_input_vertex(vh_or_i)
+        if isinstance(vh_or_i, int): # point is on an edge
+            if self.cdt.is_infinite(fh): # get a finite face if needed
+                fh, _ = self.mirror_half_edge(fh, vh_or_i)
+                assert not self.cdt.is_infinite(fh)
+        triangle = self.triangle3d_for_face(fh)
+        p2 = Point_3(p.x(), p.y(), 0)
+        vline = Line_3(p2, Z_VECTOR)
+        inter = intersection(triangle, vline)
+        if not inter.is_Point_3():
+            raise InconsistentGeometricModel("Can not compute elevation",
+                                             witness_point=(p.x(), p.y()))
+        p3 = inter.get_Point_3()
+        alti = p3.z()
+        dist = abs((p3-p2).squared_length()-alti**2)
+        assert dist <= _PROXIMITY_THRESHOLD * 1e-3  + _PROXIMITY_THRESHOLD * (alti**2), (
+            "unexpected distance between point and its projection : %f (threshold = %f, altitude = %f)"
+            % (dist, _PROXIMITY_THRESHOLD, alti))
+        return alti
 
     def update_altitude_from_reference(self, reference):
         for vh in self.cdt.finite_vertices():
@@ -711,39 +803,147 @@ class ReferenceElevationMesh(ElevationMesh):
             raise TypeError('altitude is mandatory for *reference* elevation meshes')
         return super(ReferenceElevationMesh, self).insert_polyline(polyline, **kwargs)
 
-    def altitude_for_input_vertex(self, vh):
-        alti = self.input_vertex_infos(vh).altitude
-        assert alti is not UNSPECIFIED_ALTITUDE
-        return alti
 
-    def point_altitude(self, p, face_hint=None):
-        p = to_cgal_point(p)
-        fh, vh_or_i = self.locate_point(p, face_hint=face_hint)
-        if fh is None: # point p is out of the convex hull of the triangulation
-            return UNSPECIFIED_ALTITUDE
-        if isinstance(vh_or_i, Vertex_handle): # point p is a vertex
-            return self.altitude_for_input_vertex(vh_or_i)
-        if isinstance(vh_or_i, int): # point is on an edge
-            if self.cdt.is_infinite(fh): # get a finite face if needed
-                fh, _ = self.mirror_half_edge(fh, vh_or_i)
-                assert not self.cdt.is_infinite(fh)
-        triangle = self.triangle3d_for_face(fh)
-        p2 = Point_3(p.x(), p.y(), 0)
-        vline = Line_3(p2, Z_VECTOR)
-        inter = intersection(triangle, vline)
-        if not inter.is_Point_3():
-            raise InconsistentGeometricModel("Can not compute elevation",
-                                             witness_point=(p.x(), p.y()))
-        p3 = inter.get_Point_3()
-        alti = p3.z()
-        dist = abs((p3-p2).squared_length()-alti**2)
-        assert dist <= _PROXIMITY_THRESHOLD * 1e-3  + _PROXIMITY_THRESHOLD * (alti**2), (
-            "unexpected distance between point and its projection : %f (threshold = %f, altitude = %f)"
-            % (dist, _PROXIMITY_THRESHOLD, alti))
-        return alti
+class ElevationProfile(object):
+    """2D profile built from the intersection of a segment with a mesh CDT.
 
-    def copy_as_ElevationMesh(self):
-        return self.copy(class_=ElevationMesh)
+    mesh: a ReferenceElevationMesh
+    segment: a LineString (shapely.geometry)
+
+    Example:
+
+    >>> profile = ElevationProfile(mesh, ((0, 0), (1, 1)))
+    >>> # Evaluate the profile a distance 0.5 from segment origin.
+    >>> profile(0.5)
+    >>> # Evaluate the profile for an array of distances.
+    >>> h = profile(np.arange(0, 1, 0.1))
+    >>> # Compute the first and second derivative of the profile.
+    >>> dh = h.gradient()
+    >>> d2h = dh.gradient()
+    """
+    def __init__(self, mesh, segment):
+        self._mesh = mesh
+        if not isinstance(segment, LineString):
+            segment = LineString(segment)
+        if len(segment.coords) != 2:
+            raise ValueError('expecting a segment with two points')
+        self._segment = segment
+        self.points = mesh.segment_intersection_points(segment)
+        # Cached spline.
+        self._spline = None
+
+    def face_data_interpolator(self, face_data):
+        """Return an interpolator on profile points for data associated with
+        mesh faces through the `face_data` dict.
+        """
+        distances = self._point_distances()
+        point_data = [self.point_data(d, face_data) for d in distances]
+        return self.point_data_interpolator(point_data, distances)
+
+    def point_data_interpolator(self, point_data, _distances=None):
+        """Return an interpolator on profile points for data associated with
+        profile points through `point_data`.
+
+        `point_data` may be a sequence of same lenght that distances or a
+        callable giving data as a function of the distance to the segment
+        origin.
+        """
+        distances = _distances or self._point_distances()
+        if callable(point_data):
+            point_data = map(point_data, distances)
+        elif len(distances) != len(point_data):
+            raise ValueError('incompatible number of data points')
+        return InterpolatedUnivariateSpline(distances, point_data, k=1)
+
+    @property
+    def spline(self):
+        """The underlying interpolating spline.
+
+        May be None if the segment does not intersect the mesh.
+        """
+        if not self.points:
+            # no points in segment, cannot build a spline.
+            return None
+        if not self._spline:
+            self._spline = self.point_data_interpolator(self.point_altitude)
+        return self._spline
+
+    @property
+    def direction(self):
+        """Direction vector (in horizontal plane) of the profile as a numpy
+        array.
+        """
+        start, end = self._segment.coords
+        v = np.array(end) - np.array(start)
+        return v / np.linalg.norm(v)
+
+    @property
+    def _segment_origin(self):
+        return Point(self._segment.coords[0])
+
+    def _point_at_distance(self, dist):
+        """Return a Point object located at `dist` from segment origin"""
+        return Point(np.array(self._segment_origin) + dist * self.direction)
+
+    def _point_distances(self):
+        """Return the list of point distances"""
+        origin = self._segment_origin
+        return [origin.distance(p) for p in self.points]
+
+    def point_altitude(self, dist):
+        """Return the altitude of a point located at `dist` from segment
+        origin. This is the altitude of the mesh triangle the point belongs
+        to.
+        """
+        p = self._point_at_distance(dist)
+        return self._mesh.point_altitude(p)
+
+    def point_data(self, dist, face_data, default=None):
+        """Return some "data" at a point located at `dist` from segment origin
+        based on the mesh face the point belongs to and the `face_data`
+        mapping which relates mesh face handles to these "data". `default` is
+        used if the face is not found in the `face_data` map or the the point
+        if outside the mesh convex hull. In case the point is located on a
+        mesh vertex, the data of any of the mesh faces which the vertex
+        belongs to will be used.
+
+        For instance, given a `material_by_face` map::
+
+            material = profile.point_data(dist, material_by_face)
+
+        will return the material of a point located at `dist` from segment
+        origin in the profile.
+        """
+        p = self._point_at_distance(dist)
+        # See ReferenceElevationMesh.point_altitude for logic.
+        fh, vh_or_i = self._mesh.locate_point(to_cgal_point(p))
+        if fh is None:
+            # Point outside the convex hull.
+            return default
+        if isinstance(vh_or_i, Vertex_handle):
+            # Point is a vertex.
+            for fh in self._mesh.cdt.finite_faces():
+                if fh.has_vertex(vh_or_i):
+                    break
+            else:
+                return default
+        if isinstance(vh_or_i, int):
+            # Point is on an edge.
+            if self._mesh.cdt.is_infinite(fh): # get a finite face if needed
+                fh, _ = self._mesh.mirror_half_edge(fh, vh_or_i)
+                assert not self._mesh.cdt.is_infinite(fh)
+        return face_data.get(fh, default)
+
+    def __call__(self, dist):
+        """Return the altitude at distance `dist` from segment origin.
+
+        Either it is interpolated if the segment intersects some mesh faces or
+        it is computed by mesh projection.
+        """
+        if self.spline is not None:
+            return self.spline(dist)
+        else:
+            return np.vectorize(self.point_altitude)(dist)
 
 
 class FaceFlooder(object):
