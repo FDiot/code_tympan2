@@ -84,6 +84,7 @@ TYProjet* TYCalcul::getProjet()
 
 TYCalcul& TYCalcul::operator=(const TYCalcul& other)
 {
+    _tabRays.clear();
     if (this != &other)
     {
         TYElement::operator =(other);
@@ -100,7 +101,9 @@ TYCalcul& TYCalcul::operator=(const TYCalcul& other)
         _emitAcVolNode = other._emitAcVolNode;
         _mapElementRegime = other._mapElementRegime;
         _solverId = other._solverId;
+        _tabRays = other._tabRays;
     }
+
     return *this;
 }
 
@@ -122,6 +125,7 @@ bool TYCalcul::operator==(const TYCalcul& other) const
         if (_mapElementRegime != other._mapElementRegime) { return false; }
         if (_elementSelection != other._elementSelection) { return false; }
         if (_solverId != other._solverId) { return false; }
+        if (_tabRays != other._tabRays) { return false; }
     }
     return true;
 }
@@ -169,6 +173,13 @@ bool TYCalcul::deepCopy(const TYElement* pOther, bool copyId /*=true*/)
         pMaillage->duplicatePtCalcState(pOtherCalcul, this);
         // Ajout du maillage
         addMaillage(pMaillageGeoNode);
+    }
+
+    for (i=0; i<pOtherCalcul->_tabRays.size(); i++)
+    {
+        LPTYRay aRay = new TYRay();
+        aRay->deepCopy(pOtherCalcul->_tabRays.at(i), copyId);
+        _tabRays.push_back(aRay);
     }
 
     return true;
@@ -263,6 +274,13 @@ DOM_Element TYCalcul::toXML(DOM_Element& domElement)
         tmp.toXML(domNewElem);
     }
 
+    // Sauvegarde de rayons (chemins acoustiques)
+    DOM_Element listRaysNode = domDoc.createElement("ListRayons");
+    domNewElem.appendChild(listRaysNode);
+    for (size_t i=0; i<_tabRays.size(); i++)
+    {
+        _tabRays.at(i)->toXML(listRaysNode);
+    }
 
     return domNewElem;
 }
@@ -278,6 +296,8 @@ int TYCalcul::fromXML(DOM_Element domElement)
     for (i = 0; i < 8; i++) { getOk[i] = false; }
     int retVal = -1;
     LPTYMaillageGeoNode pMaillageGeoNode = new TYMaillageGeoNode(NULL, this);
+    LPTYRay aRay = new TYRay();
+    _tabRays.clear();
 
     // CLM-NT33: Compatibiltité ancien format XML
     LPTYPointControl pPointControl = new TYPointControl();
@@ -391,11 +411,23 @@ int TYCalcul::fromXML(DOM_Element domElement)
                 }
             }
         }
-        else if (elemCur.nodeName() == "ReflexionAccVolNodes") // Etats des AccVolNodes en reflexion
+        else if (elemCur.nodeName() == "ListRayons")
         {
-        }
-        else if (elemCur.nodeName() == "EtatAtts") // Etats des attenuateurs
-        {
+            DOM_Element elemCur2;
+            QDomNodeList childs2 = elemCur.childNodes();
+
+            for (size_t j = 0; j < childs2.length(); j++)
+            {
+                elemCur2 = childs2.item(j).toElement();
+                if (aRay->callFromXMLIfEqual(elemCur2, &retVal))
+                {
+                    if (retVal == 1)
+                    {
+                        _tabRays.push_back(aRay);
+                        aRay = new TYRay();
+                    }
+                }
+            }
         }
 
         // CLM-NT33: Compatibilitité avec ancien format XML
@@ -516,6 +548,7 @@ int TYCalcul::fromXML(DOM_Element domElement)
 void TYCalcul::purge()
 {
     remAllMaillage();
+    _tabRays.clear();
 
     clearSelection();
 
@@ -548,9 +581,6 @@ void TYCalcul::clearResult()
     }
 
     _pResultat->purge();
-
-    _mapElementRegime.clear();
-    _emitAcVolNode.clear();
 
     setIsGeometryModified(true);
 }
@@ -634,7 +664,7 @@ void TYCalcul::addToSelection(TYElement* pElt, bool recursif /*=true*/)
             // Si un objet est ajoute son parent l'est forcemment
             addToSelection(pElt->getParent(), false);
         }
-        else
+        else if (dynamic_cast<TYUserSourcePonctuelle*>(pElt) != nullptr)
         {
             TYUserSourcePonctuelle* pSource = dynamic_cast<TYUserSourcePonctuelle*>(pElt);
             if (pSource != nullptr) { etat = pSource->getIsRayonnant(); }
@@ -1188,12 +1218,12 @@ void TYCalcul::setState(int state)
     }
 }
 
-void TYCalcul::addPtCtrlToResult(TYPointControl* pPoint)
+bool TYCalcul::addPtCtrlToResult(TYPointControl* pPoint)
 {
-    _pResultat->addRecepteur(pPoint);
+    return _pResultat->addRecepteur(pPoint);
 }
 
-void TYCalcul::remPtCtrlFromResult(TYPointControl* pPoint)
+bool TYCalcul::remPtCtrlFromResult(TYPointControl* pPoint)
 {
-    _pResultat->remRecepteur(pPoint);
+    return _pResultat->remRecepteur(pPoint);
 }

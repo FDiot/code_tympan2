@@ -58,37 +58,6 @@ TYPoint::~TYPoint()
 {
 }
 
-void TYPoint::set(double x, double y, double z)
-{
-    _x = x;
-    _y = y;
-    _z = z;
-}
-
-void TYPoint::setFromOGL(float x, float y, float z)
-{
-    _x =   x;
-    _y = - z;
-    _z =   y;
-}
-
-void TYPoint::setFromOGL(float coords[3])
-{
-    setFromOGL(coords[0], coords[1], coords[2]);
-}
-
-void TYPoint::getToOGL(float& x, float& y, float& z)
-{
-    x =   _x;
-    y =   _z;
-    z = - _y;
-}
-
-void TYPoint::getToOGL(float coords[3])
-{
-    getToOGL(coords[0], coords[1], coords[2]);
-}
-
 TYPoint& TYPoint::operator=(const TYPoint& other)
 {
     if (this != &other)

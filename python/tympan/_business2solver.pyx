@@ -83,6 +83,27 @@ cdef class Business2SolverConverter:
         self.comp.thisptr.getRealPointer().goPostprocessing()
         # Clear intermediate data
         del self.transitional_result_matrix
+        #Try to catch rays from solver and to push them in business datas
+        self.update_business_rays_tab(result)
+
+    @cy.locals(result=tysolver.ResultModel)
+    def update_business_rays_tab(self, result):
+        """
+        Recover acoustic pathes from solver
+        """
+        solver_rays_tab = cy.declare(vector[cy.pointer(tycommon.acoustic_path)])
+        solver_rays_tab = result.thisptr.get().get_path_data()
+        business_rays_tab = cy.declare(cy.pointer(vector[SmartPtr[tybusiness.TYRay]]))
+        business_rays_tab = cy.address(self.comp.thisptr.getRealPointer().getTabRays())
+        its = cy.declare(vector[cy.pointer(tycommon.acoustic_path)].iterator)
+        its = solver_rays_tab.begin()
+        while its != solver_rays_tab.end():
+            current_solv_ray = cy.declare(cy.pointer(tycommon.acoustic_path))
+            current_solv_ray = deref(its)
+            current_bus_ray = cy.declare(SmartPtr[tybusiness.TYRay])
+            current_bus_ray = tybusiness.build_ray(deref(current_solv_ray))
+            business_rays_tab.push_back(current_bus_ray)
+            inc(its)
 
     @cy.locals(model=tysolver.ProblemModel, result=tysolver.ResultModel)
     def update_business_receptors(self, model, result):
@@ -216,11 +237,13 @@ cdef class Business2SolverConverter:
         sources_of_elt = cy.declare(vector[SmartPtr[tybusiness.TYGeometryNode]])
         its = cy.declare(map[tybusiness.TYElem_ptr, vector[SmartPtr[tybusiness.TYGeometryNode]]].iterator)
         its = infra_sources.begin()
+        business_src = cy.declare(tybusiness.TYElem_ptr)
         nb_sources = 0
         # For each business macro source (ex: machine, building...)
         while its != infra_sources.end():
+            business_src = deref(its).first
+            macro_source_id = id_str(business_src)
             sources_of_elt = deref(its).second
-            macro_source_id = id_str(deref(its).first)
             self.macro2micro_sources[macro_source_id] = []
             nsubsources = sources_of_elt.size()
             # For each of the micro sources making the macro one
@@ -271,7 +294,7 @@ cdef class Business2SolverConverter:
                     self.bus2solv_sources[id_str(subsource_elt)] = source_idx
                     # Copy source mapping to macro2micro_sources
                     self.macro2micro_sources[macro_source_id].append(id_str(subsource))
-                    self.instances_mapping[macro_source_id] = subsource
+                    self.instances_mapping[macro_source_id] = business_src
                     nb_sources += 1
             inc(its)
         # Recurse on subsites

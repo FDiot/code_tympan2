@@ -326,13 +326,13 @@ public:
         \brief Ajoute un point de controle au tableau des resultats
         \param : TYPoint* : Pointeur sur le point a ajouter
      */
-    void addPtCtrlToResult(TYPointControl* pPoint);
+    bool addPtCtrlToResult(TYPointControl* pPoint);
 
     /*!
         \brief Supprime un point de controle au tableau des resultats
         \param : TYPoint* : Pointeur sur le point a ajouter
      */
-    void remPtCtrlFromResult(TYPointControl* pPoint);
+    bool remPtCtrlFromResult(TYPointControl* pPoint);
 
     /**
      * \fn  LPTYResultat getResultat()
@@ -441,6 +441,14 @@ public:
     // Solver parameters for this computation
     QString solverParams;
 
+    /*!
+    * \fn TYTabRay getAllRays()
+    * \brief Renvoie un tableau contenant tous les rayons trouvés par le lancer de rayons.
+    * \return Renvoie le tableau de rayons Tympan
+    */
+    TYTabRay& getTabRays() { return _tabRays; }
+
+
 protected:
     /**
      * \fn void updateGraphicMaillage()
@@ -484,6 +492,9 @@ protected:
 
     ///Resultat.
     LPTYResultat _pResultat;
+
+    //Rayons valides produit par le lancer de rayons
+    TYTabRay _tabRays;
 };
 
 #include "TYProjet.h"
