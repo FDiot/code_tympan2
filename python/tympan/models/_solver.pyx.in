@@ -101,6 +101,17 @@ cdef class ProblemModel:
             receptors.append(receptor)
         return receptors
 
+    @property
+    def triangles(self):
+        """All the acoustic triangles of the model"""
+        assert self.thisptr.get() != NULL
+        triangles = []
+        for i in xrange(self.ntriangles):
+            triangle = MeshTriangle()
+            triangle.thisptr = cy.address(self.thisptr.get().triangle(i))
+            triangles.append(triangle)
+        return triangles
+
     def _export_triangular_mesh(self):
         """Build a triangular mesh from the acoustic problem model"""
         assert self.thisptr.get() != NULL
@@ -175,9 +186,39 @@ cdef class SolverSource:
         assert self.thisptr != NULL
         return tycommon.ospectre2spectrum(self.thisptr.spectrum)
 
+    @property
+    def directivity_vector(self):
+        """Source directivity vector in the global frame"""
+        assert self.thisptr != NULL
+        # Check the directivity of the source is a CommonFaceDirectivity directivity
+        cf_dir = cy.declare(cy.pointer(CommonFaceDirectivity))
+        cf_dir = dynamic_cast_commonface_dir(self.thisptr.directivity)
+        if cf_dir == NULL:
+            raise ValueError("The directivity of this source has no support normal vector")
+        # return its support normal vector
+        return tycommon.ovector3d2vector3d(cf_dir.get_normal())
+
     def value(self, freq):
         """The spectrum value corresponding to the 'freq' frequency (linear, power)"""
         return self.thisptr.spectrum.getValueReal(freq)
+
+    property volume_id:
+        """identifier of the volume containing the source"""
+        def __get__(self):
+            assert self.thisptr != NULL
+            return self.thisptr.volume_id
+        def __set__(self, volume_id):
+            assert self.thisptr != NULL
+            self.thisptr.volume_id = volume_id
+
+    property face_id:
+        """identifier of the face of the volume containing the source"""
+        def __get__(self):
+            assert self.thisptr != NULL
+            return self.thisptr.face_id
+        def __set__(self, face_id):
+            assert self.thisptr != NULL
+            self.thisptr.face_id = face_id
 
 
 cdef class SolverReceptor:
@@ -191,4 +232,20 @@ cdef class SolverReceptor:
         """Return the acoustic source position (as a 'Point3D' object)"""
         assert self.thisptr != NULL
         return tycommon.opoint3d2point3d(self.thisptr.position)
+
+
+cdef class MeshTriangle:
+    thisptr = cy.declare(cy.pointer(AcousticTriangle))
+
+    def __cinit__(self):
+        self.thisptr = NULL
+
+    @property
+    def volume_id(self):
+        """Identifier of the volume containing the triangle"""
+        assert self.thisptr != NULL
+        if not self.thisptr.volume_id.empty():
+            return self.thisptr.volume_id
+        return None
+
 

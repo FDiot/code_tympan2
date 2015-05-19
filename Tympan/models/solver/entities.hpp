@@ -123,7 +123,7 @@ public:
     AcousticTriangle(node_idx n1, node_idx n2, node_idx n3);
 
     node_idx n[3];
-
+    string volume_id;
     shared_ptr<AcousticMaterialBase> made_of;
 };
 
@@ -163,7 +163,9 @@ public:
                       support_size(support_size_) {}
 
     ~CommonFaceDirectivity() {}
-    
+
+    Vector get_normal(){ return support_normal; }
+
     static void set_atmosphere( AtmosphericConditions *atmosphere_ ) { atmosphere = atmosphere_; }
 
 protected :
@@ -274,6 +276,8 @@ public:
     Point position;
     Spectrum spectrum;
     SourceDirectivityInterface* directivity;
+    string volume_id;
+    string face_id;
 };
 
 typedef std::deque<AcousticSource> source_pool_t;
