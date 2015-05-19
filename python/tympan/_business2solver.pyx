@@ -279,17 +279,33 @@ cdef class Business2SolverConverter:
                     else: #  it is a computed acoustic source
                         pcompdirectivity = cy.declare(cy.pointer(tybusiness.TYComputedDirectivity))
                         pcompdirectivity = tybusiness.downcast_computed_directivity(pbus_directivity)
+                        # compute global directivity
+                        glob_directivity = cy.declare(tycommon.OVector3D)
+                        glob_directivity = tycommon.OVector3D(pcompdirectivity.DirectivityVector)
+                        glob_directivity = tycommon.dot(globalmatrix, glob_directivity)
                         if pcompdirectivity.Type == tybusiness.Surface:
                             pdirectivity = new tysolver.VolumeFaceDirectivity(
-                                pcompdirectivity.DirectivityVector, pcompdirectivity.SpecificSize)
+                                glob_directivity, pcompdirectivity.SpecificSize)
                         elif pcompdirectivity.Type == tybusiness.Baffled:
                             pdirectivity = new tysolver.BaffledFaceDirectivity(
-                                pcompdirectivity.DirectivityVector, pcompdirectivity.SpecificSize)
+                                glob_directivity, pcompdirectivity.SpecificSize)
                         else: # Chimney
                             pdirectivity = new tysolver.ChimneyFaceDirectivity(
-                                pcompdirectivity.DirectivityVector, pcompdirectivity.SpecificSize)
+                                glob_directivity, pcompdirectivity.SpecificSize)
                     # Add it to the solver model
-                    source_idx = model.thisptr.get().make_source(ppoint[0], subsource.getSpectre()[0], pdirectivity)
+                    source_idx = model.thisptr.get().make_source(ppoint[0], subsource.getSpectre()[0],
+                                                                 pdirectivity)
+                    # if the source comes from an infrastructure element, add it
+                    # information about the face and volume that contain it
+                    if pusersource == NULL:
+                        source = model.source(source_idx)
+                        # Find face and volume of the source
+                        face_id = tybusiness.find_surface_node_id(subsource)
+                        if face_id is not None:
+                            source.face_id = face_id
+                        volume_id = tybusiness.find_volume_id(subsource)
+                        assert volume_id != None, 'no acoustic volume linked to the source'
+                        source.volume_id = volume_id
                     # Record where it has been stored
                     self.bus2solv_sources[id_str(subsource_elt)] = source_idx
                     # Copy source mapping to macro2micro_sources
@@ -417,11 +433,13 @@ cdef class Business2SolverConverter:
             mat_name = cy.declare(string)
             mat_name = buildmat.name
             actri = cy.declare(cy.pointer(tysolver.AcousticTriangle))
+            volume_id = surface.volume_id()
             # Set the material of the surface
             for i in xrange(tgles_idx.size):
                 pmat = model.thisptr.get().make_material(mat_name, mat_cspec)
                 actri = cy.address(model.thisptr.get().triangle(tgles_idx[i]))
                 actri.made_of = pmat
+                actri.volume_id = volume_id
         # Recurse on subsites
         for subsite in site.subsites:
             self.process_infrastructure(model, subsite)

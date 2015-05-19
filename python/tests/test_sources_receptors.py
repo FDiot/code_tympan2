@@ -13,6 +13,24 @@ _TEST_PROBLEM_DIR = osp.join(TEST_DATA_DIR, 'computed-projects-panel')
 assert osp.isdir(_TEST_PROBLEM_DIR), "The test problem dir does not exists '%s'" % _TEST_PROBLEM_DIR
 
 
+class SolverSourceTC(TympanTC):
+
+    def test_directivity_vector(self):
+        proj = self.load_project(osp.join('projects-panel', 'site_with_single_machine.xml'))
+        model = Model.from_project(proj)
+        vectors = {'{cfdf78a8-bc89-4583-afff-f238b6752f18}': [(-1, 0, 0), None],
+                   '{70420c97-5b97-4c5b-b429-ec2aaf801f0d}': [(1, 0, 0), None]}
+        for source in model.sources:
+            if source.face_id in vectors:
+                vectors[source.face_id][1] = (source.directivity_vector.vx,
+                                              source.directivity_vector.vy,
+                                              source.directivity_vector.vz)
+        for key, value in vectors.iteritems():
+            if value[1] is None:
+                self.fail('No directivity vector found for face %s' % key)
+            self.assertEqual(value[0], value[1])
+
+
 class SourceAdditionTC(TympanTC):
 
     def test_add_sources_to_model(self):
@@ -72,6 +90,23 @@ class SourceAdditionTC(TympanTC):
         self.assertAlmostEqual(source.value(63.0), 1e-11)
         self.assertAlmostEqual(source.value(100.0), 1e-10)
         self.assertEqual(source.value(160.0), 1e-7)
+
+
+class SourceContainerTC(TympanTC):
+
+     def test_source_container(self):
+        """Check the id of the surface and volume containing the source"""
+        proj = self.load_project(osp.join('projects-panel', 'site_with_single_machine.xml'))
+        model = Model.from_project(proj)
+        for source in model.sources:
+            self.assertEqual(source.volume_id, "{91ed858c-8434-467a-bf14-bac2447a0ee7}")
+            # Face must be one of the 6 of the volume
+            self.assertIn(source.face_id, ["{70420c97-5b97-4c5b-b429-ec2aaf801f0d}",
+                                           "{14ce2c62-75d2-4173-b99d-b8a2d1a13da0}",
+                                           "{cfdf78a8-bc89-4583-afff-f238b6752f18}",
+                                           "{805043e8-7698-4c71-9516-f4ae9447c441}",
+                                           "{0c4a96f8-3b43-4313-9eae-af2a2237a2f4}",
+                                           "{e6f1e3a1-f45a-4d2c-bea0-1b3618343738}"])
 
 
 class TestTympan(TympanTC):

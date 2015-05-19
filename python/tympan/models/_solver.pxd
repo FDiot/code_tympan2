@@ -66,6 +66,8 @@ cdef extern from "Tympan/models/solver/entities.hpp" namespace "tympan":
         OPoint3D position
         OSpectre spectrum
         SourceDirectivityInterface* directivity
+        string volume_id
+        string face_id
 
     cdef cppclass AcousticReceptor(BaseEntity):
         OPoint3D position
@@ -73,6 +75,7 @@ cdef extern from "Tympan/models/solver/entities.hpp" namespace "tympan":
     cdef cppclass AcousticTriangle:
         shared_ptr[AcousticMaterialBase] made_of
         size_t n[3]
+        string volume_id
 
     cdef cppclass AcousticMaterialBase:
         pass
@@ -92,6 +95,7 @@ cdef extern from "Tympan/models/solver/entities.hpp" namespace "tympan":
     cdef cppclass CommonFaceDirectivity(BaseEntity, SourceDirectivityInterface):
         CommonFaceDirectivity() # XXX
         CommonFaceDirectivity(const OVector3D& support_normal_, double support_size_)
+        OVector3D get_normal()
 
     cdef cppclass VolumeFaceDirectivity(CommonFaceDirectivity):
         VolumeFaceDirectivity(const OVector3D& support_normal_, double support_size_)
@@ -101,6 +105,8 @@ cdef extern from "Tympan/models/solver/entities.hpp" namespace "tympan":
 
     cdef cppclass BaffledFaceDirectivity(CommonFaceDirectivity):
         BaffledFaceDirectivity(const OVector3D& support_normal_, double support_size_)
+
+    CommonFaceDirectivity* dynamic_cast_commonface_dir "dynamic_cast<tympan::CommonFaceDirectivity*>"(SourceDirectivityInterface *)
 
 cdef extern from "Tympan/models/solver/config.h" namespace "tympan::SolverConfiguration":
     SmartPtr[SolverConfiguration] get()

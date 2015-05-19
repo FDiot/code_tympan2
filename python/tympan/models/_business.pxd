@@ -68,6 +68,9 @@ cdef extern from "Tympan/models/business/TYElement.h":
     TYSiteNode* downcast_sitenode "downcast<TYSiteNode>"(TYElement*)
     TYSol* downcast_sol "downcast<TYSol>"(TYElement*)
     TYCalcul* downcast_calcul "downcast<TYCalcul>"(TYElement*)
+    TYAcousticSurface* downcast_acoustic_surface "downcast<TYAcousticSurface>"(TYElement*)
+    TYAcousticSurfaceNode* downcast_acoustic_surface_node "downcast<TYAcousticSurfaceNode>"(TYElement*)
+    TYAcousticVolume* downcast_acoustic_volume "downcast<TYAcousticVolume>"(TYElement*)
 
 cdef extern from "Tympan/models/business/acoustic/TYDirectivity.h":
     TYComputedDirectivity* downcast_computed_directivity "downcast_tydirectivity<TYComputedDirectivity>"(TYDirectivity *)
@@ -196,6 +199,14 @@ cdef extern from "Tympan/models/business/geoacoustic/TYAcousticSurface.h":
         void exportMesh(deque[tycommon.OPoint3D] &, deque[tycommon.OTriangle] &, TYGeometryNode &)
         SmartPtr[TYMateriauConstruction] getMateriau()
 
+cdef extern from "Tympan/models/business/geoacoustic/TYAcousticVolume.h":
+    cdef cppclass TYAcousticVolume (TYElement):
+        pass
+
+cdef extern from "Tympan/models/business/geoacoustic/TYAcousticSurfaceNode.h":
+    cdef cppclass TYAcousticSurfaceNode (TYElement):
+        pass
+
 cdef extern from "Tympan/models/business/geometry/TYGeometryNode.h":
     cdef cppclass TYGeometryNode (TYElement):
         TYElement* getElement()
@@ -291,4 +302,5 @@ cdef pointcalcul2receptor(SmartPtr[TYPointCalcul] ptcalc)
 cdef typrojet2project(TYProjet* proj)
 cdef tymateriauconstruction2material(SmartPtr[TYMateriauConstruction] mat)
 cdef tysol2ground(SmartPtr[TYSol] grnd)
-
+cdef find_volume_id(TYElement* elem)
+cdef find_surface_node_id(TYElement* elem)
