@@ -288,7 +288,7 @@ class MeshFiller(object):
         feature_by_face = {}
         # Fill landtakes using the flooding algorithm.
         for feature in mainsite.landtakes:
-            self._check_feature_inserted(feature, mainsite)
+            _check_feature_inserted(feature, mainsite)
             faces = self._faces_for_polygonal_feature(
                 feature, flooder_class=LandtakeFaceFlooder)
             for fh in faces:
@@ -296,30 +296,22 @@ class MeshFiller(object):
                     feature_by_face[fh] = feature
         # Fill material areas by finding the underlying feature based on the
         # position of face "middle point".
-        checked = set()
+        features = _material_area_features(mainsite, cleaner)
         for fh in self._mesh.cdt.finite_faces():
             if fh in feature_by_face:
+                # Already inserted (landtake).
                 continue
-            ring = geometry.polygon.LinearRing(
-                [self._mesh.py_vertex(fh.vertex(i)) for i in range(3)])
-            center = geometry.Point(ring.representative_point().coords[0])
-            for material_area_id in cleaner.material_areas_inner_first():
-                feature = cleaner.equivalent_site.features_by_id[material_area_id]
-                if feature not in checked:
-                    self._check_feature_inserted(feature, mainsite)
-                    checked.add(feature)
-                if feature.shape.exterior.contains(center):
+            point = self._mesh.point_for_face(fh)
+            assert point is not None, \
+                    'could not find a point inside face handle {}'.format(fh)
+            point = geometry.Point((point.x(), point.y()))
+            for feature in features:
+                if feature.shape.contains(point):
                     feature_by_face[fh] = feature
                     break
             else:
                 feature_by_face[fh] = None
         return feature_by_face
-
-    @staticmethod
-    def _check_feature_inserted(feature, site):
-        if feature.id not in datamodel.SiteNode.recursive_features_ids(site):
-            raise ValueError("Only features already inserted can be filled ID:%s"
-                             % feature.id)
 
     def _faces_for_polygonal_feature(self, feature, flooder_class):
         """Return the list of faces within a polygonal feature"""
@@ -328,3 +320,24 @@ class MeshFiller(object):
         flooder = self._mesh.flood_polygon(flooder_class, vertices,
                                            close_it=close_it)
         return flooder.visited
+
+
+def _check_feature_inserted(feature, site):
+    if feature.id not in datamodel.SiteNode.recursive_features_ids(site):
+        raise ValueError("Only features already inserted can be filled ID:%s"
+                         % feature.id)
+
+
+def _material_area_features(mainsite, cleaner):
+    """Return the list geometric features corresponding to material areas
+    found in `cleaner`.
+    """
+    checked = set()
+    features = []
+    for material_area_id in cleaner.material_areas_inner_first():
+        feature = cleaner.equivalent_site.features_by_id[material_area_id]
+        if feature not in checked:
+            _check_feature_inserted(feature, mainsite)
+            checked.add(feature)
+        features.append(feature)
+    return features
