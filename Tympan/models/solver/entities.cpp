@@ -6,6 +6,8 @@
  *  \author Damien Garaud <damien.garaud@logilab.fr>
  */
 
+#include <vector>
+#include <numeric>
 #include "entities.hpp"
 #include "Tympan/models/common/atmospheric_conditions.h"
 
@@ -26,7 +28,6 @@ AcousticBuildingMaterial::AcousticBuildingMaterial(
 ComplexSpectrum AcousticBuildingMaterial::asEyring() const
 {
     ComplexSpectrum eyring(spectrum);
-
     // 1-e^(-alphaS)
 
     return eyring.exp(-1.0).mult(-1.0).sum(1.0);
@@ -34,8 +35,8 @@ ComplexSpectrum AcousticBuildingMaterial::asEyring() const
 
 // ---------
 AcousticGroundMaterial::AcousticGroundMaterial(
-    const string& name_, double resistivity_ ) :
-    AcousticMaterialBase(name_),  resistivity(resistivity_), thickness(1.0)
+    const string& name_, double resistivity_, double deviation_, double length_) :
+    AcousticMaterialBase(name_),  resistivity(resistivity_), thickness(1.0), deviation(deviation_), length(length_) 
 {
     init();
 }
@@ -48,11 +49,11 @@ void AcousticGroundMaterial::init()
 
 ComplexSpectrum AcousticGroundMaterial::get_absorption (double incidence_angle, double length)
 {
-    ComplexSpectrum Zs, Rp, W, Fw, Q;
-
-    computeZs(incidence_angle, Zs);
-    computeRp(incidence_angle, Zs, Rp);
-    computeW(incidence_angle, length, Zs, W);
+    ComplexSpectrum  Zs, Rp, W, Fw, Q;
+    computeZs(incidence_angle, Zc, Zs);
+	computeZf(incidence_angle, Zs);
+    computeRp(incidence_angle, Zf, Rp);
+    computeW(incidence_angle, length, Zf, W);
     computeFw(W, Fw);
     computeQ(incidence_angle, Rp, Fw, Q);
 
@@ -103,27 +104,108 @@ void AcousticGroundMaterial::computeK()
      K.setType(SPECTRE_TYPE_AUTRE);
 }
 
- void AcousticGroundMaterial::computeZs(double angle, ComplexSpectrum& spectrum)
+ void AcousticGroundMaterial::computeZs(double angle, ComplexSpectrum Z, ComplexSpectrum& spectrum)
  {
     double k_value;
 
-    TYComplex operand, K_value, Zc_value;
+    TYComplex operand, K_value, Z_value;
     double cosPhi = cos(angle);
 
     TYComplex cplxVal;
 
-    for (unsigned int i = 0 ; i < Zc.getNbValues(); i++)
+    for (unsigned int i = 0 ; i < Z.getNbValues(); i++)
     {
         k_value = atmosphere->get_k().getTabValReel()[i];
         K_value = TYComplex(K.getTabValReel()[i], K.getTabValImag()[i]);
-        Zc_value = TYComplex(Zc.getTabValReel()[i], Zc.getTabValImag()[i]);
+        Z_value = TYComplex(Z.getTabValReel()[i], Z.getTabValImag()[i]);
 
         operand = std::sqrt(CPLX_UN - ((k_value * cosPhi / K_value) * (k_value * cosPhi / K_value)));
 
-        cplxVal = Zc_value * cotanh(CPLX_MUN * CPLX_J * K_value * thickness * operand) / operand;
+        cplxVal = Z_value * cotanh(CPLX_MUN * CPLX_J * K_value * thickness * operand) / operand;
         spectrum.getTabValReel()[i] = cplxVal.real();
         spectrum.getTabValImag()[i] = cplxVal.imag();
     }
+ }
+
+ void AcousticGroundMaterial::computeZf(double angle, ComplexSpectrum Zs)
+ {
+	 double k0_value, k_value, intv_a, intv_b;
+	 size_t size = Zf.getNbValues();
+	 ComplexSpectrum Bf;
+
+	 for (unsigned int i=0; i < size; i++)
+	 {
+		k0_value = atmosphere->get_k().getTabValReel()[i];
+		k_value = k0_value*sin(angle);
+	    
+		// Partie réelle
+		intv_a = sqrt(k0_value)/100;
+		std::vector<double> u_alpha(size),integrande_alpha1(size),integrande_alpha2(size);
+		for (int j=0; j<=100; j++)
+		{
+			u_alpha.push_back(j*intv_a);
+			double expression1a = (1.0/(k0_value*sqrt(2*k0_value - u_alpha[j]*u_alpha[j])))*((k0_value*k0_value+k_value*(k0_value-u_alpha[j]*u_alpha[j]))*(k0_value*k0_value+k_value*(k0_value-u_alpha[j]*u_alpha[j])))*GaussianSpectrum(k_value+(k0_value-u_alpha[j]*u_alpha[j]), deviation, length);
+			double expression2a = (1.0/(k0_value*sqrt(2*k0_value - u_alpha[j]*u_alpha[j])))*((k0_value*k0_value-k_value*(k0_value-u_alpha[j]*u_alpha[j]))*(k0_value*k0_value-k_value*(k0_value-u_alpha[j]*u_alpha[j])))*GaussianSpectrum(k_value-(k0_value-u_alpha[j]*u_alpha[j]), deviation, length);
+			integrande_alpha1.push_back(expression1a);
+			integrande_alpha2.push_back(expression2a);
+	    }
+		double alpha1 = trapz(u_alpha, integrande_alpha1) ;
+		double alpha2 = trapz(u_alpha, integrande_alpha2) ;
+		double alpha = alpha1 + alpha2;
+		Bf.getTabValReel()[i] = alpha;
+		u_alpha.clear();
+		integrande_alpha1.clear();
+		integrande_alpha2.clear();
+
+		// Partie imaginaire
+		intv_b = (6/length)/100;// Condition sur length
+		std::vector<double> u_beta(size),integrande_beta1(size),integrande_beta2(size);
+		for (int j=0; j<=100; j++)
+		{
+			u_beta.push_back(j*intv_b);
+			double expression1b = (1.0/(k0_value*sqrt(k0_value*k0_value+u_beta[j]*u_beta[j])))*((k0_value*k0_value+k_value*sqrt(k0_value*k0_value+u_beta[j]*u_beta[j]))*(k0_value*k0_value+k_value*sqrt(k0_value*k0_value+u_beta[j]*u_beta[j])))*GaussianSpectrum(k_value+sqrt(k0_value*k0_value+u_beta[j]*u_beta[j]), deviation, length); 
+			double expression2b = (1.0/(k0_value*sqrt(k0_value*k0_value+u_beta[j]*u_beta[j])))*((k0_value*k0_value-k_value*sqrt(k0_value*k0_value+u_beta[j]*u_beta[j]))*(k0_value*k0_value-k_value*sqrt(k0_value*k0_value+u_beta[j]*u_beta[j])))*GaussianSpectrum(k_value-sqrt(k0_value*k0_value+u_beta[j]*u_beta[j]), deviation, length);
+			integrande_beta1.push_back(expression1b);
+			integrande_beta2.push_back(expression2b);
+		}
+		double beta1 = -trapz(u_beta, integrande_beta1) ;
+		double beta2 = -trapz(u_beta, integrande_beta2) ;
+		double beta = beta1 + beta2;
+		Bf.getTabValImag()[i] = beta;
+		u_beta.clear();
+		integrande_beta1.clear();
+		integrande_beta2.clear();
+
+		// Récupération de Zs
+		TYComplex cplxVal;
+		TYComplex Zs_value = TYComplex(Zs.getTabValReel()[i], Zs.getTabValImag()[i]);
+		cplxVal = CPLX_UN/Zs_value;
+
+		// Calcul de l'impedance effective
+        Bf.getTabValReel()[i] += cplxVal.real();
+        Bf.getTabValImag()[i] += cplxVal.imag();
+
+		TYComplex ZcplxVal;
+		TYComplex Bf_value = TYComplex(Bf.getTabValReel()[i], Bf.getTabValImag()[i]);
+		ZcplxVal = CPLX_UN/Bf_value;
+
+		Zf.getTabValReel()[i] = ZcplxVal.real();
+        Zf.getTabValImag()[i] = ZcplxVal.imag();
+	 }
+	 Zf.setType(SPECTRE_TYPE_AUTRE);
+ }
+
+ double AcousticGroundMaterial::GaussianSpectrum(double k, double sigma, double lc)
+ {
+	 return ((sigma*sigma)*(lc/(2*sqrt(M_PI))))*exp(-1.0/4*((k*lc)*(k*lc)));
+ }
+
+ double AcousticGroundMaterial::trapz(std::vector<double> u, std::vector<double> integrande)
+ {
+	 unsigned int size = u.size();	
+	 double sum = std::accumulate(integrande.begin()+1,integrande.end()-1,(integrande.front()+integrande.back())/2);
+	 sum *= (u.back()-u.front())/size;
+	 return sum;
  }
 
  void AcousticGroundMaterial::computeRp(double angle, const ComplexSpectrum& Zs, ComplexSpectrum& Rp)
