@@ -23,7 +23,7 @@
 
 #include "TYAcousticRectangle.h"
 #include "Tympan/models/business/acoustic/TYSourceBafflee.h"
-
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Classe pour la representation d'une bouche de ventilation.
@@ -32,7 +32,7 @@
  * Cette source est conservee dans la source surfacique de la
  * super classe TYAcousticSurface, a l'index 0.
  */
-class TYBoucheSurface: public TYAcousticRectangle
+class TYMPAN_EXPORT TYBoucheSurface: public TYAcousticRectangle
 {
     OPROTODECL(TYBoucheSurface)
     TY_EXTENSION_DECL_ONLY(TYBoucheSurface)

@@ -35,6 +35,8 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QFrame>
+#include "Tympan/gui/dllexport.h"
+
 class QVBoxLayout;
 class QHBoxLayout;
 class QGridLayout;
@@ -51,7 +53,7 @@ class QButtonGroup;
  * \brief Objet IHM pour la saisie de la resisitivite du sol
  */
 
-class TYSolResistanceDialog : public QDialog
+class TYMPAN_EXPORT TYSolResistanceDialog : public QDialog
 {
     Q_OBJECT
 

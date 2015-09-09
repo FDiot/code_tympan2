@@ -28,11 +28,12 @@ class OSegment3D;
 
 #include "Tympan/models/business/geometry/TYFaceSet.h"
 #include "Tympan/models/business/geoacoustic/TYAcousticFaceSet.h"
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Classe representant un ecran mince
  */
-class TYEcran: public TYAcousticFaceSet
+class TYMPAN_EXPORT TYEcran: public TYAcousticFaceSet
 {
     OPROTODECL(TYEcran)
     TY_EXTENSION_DECL_ONLY(TYEcran)

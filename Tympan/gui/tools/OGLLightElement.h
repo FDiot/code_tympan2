@@ -26,6 +26,7 @@
 
 #include "OGLElement.h"
 #include "Tympan/models/common/3d.h"
+#include "Tympan/gui/dllexport.h"
 
 #include <qstring.h>
 
@@ -34,7 +35,7 @@ class OGLLight;
 /**
  * Classe de light en tant qu'elemement
  */
-class OGLLightElement : public OGLElement
+class TYMPAN_EXPORT OGLLightElement : public OGLElement
 {
 public:
     /**

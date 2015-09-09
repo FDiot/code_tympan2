@@ -65,7 +65,7 @@ void intersection_report(std::deque<size_t>* intersected, CGAL_Triangles::iterat
 // This implementation is inspired from http://doc.cgal.org/4.4/Box_intersection_d/index.html
 // (see parts "4 Minimal Example for Intersecting Boxes" and
 // "5 Example for Finding Intersecting 3D Triangles")
-std::deque<size_t> intersected_triangles(CGAL_Triangles & triangle_soup,
+std::deque<size_t> COMMON_EXPORT intersected_triangles(CGAL_Triangles & triangle_soup,
         std::deque<CGAL_Point3> query_box, float length, float width, float height)
 {
     std::deque<CGAL_TBox> boxes;

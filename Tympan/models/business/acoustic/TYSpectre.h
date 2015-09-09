@@ -22,6 +22,7 @@
 
 #include "Tympan/models/business/TYElement.h"
 #include "Tympan/models/common/spectre.h"
+#include "Tympan/gui/dllexport.h"
 
 ///Collection des frequences
 typedef OTabFreq TYTabFreq;
@@ -29,7 +30,7 @@ typedef OTabFreq TYTabFreq;
 /**
  * Permet de stocker des valeurs de puissance accoustique pour differentes frequences.
  */
-class TYSpectre: public TYElement, public OSpectre
+class TYMPAN_EXPORT TYSpectre: public TYElement, public OSpectre
 {
 
     OPROTODECL(TYSpectre)

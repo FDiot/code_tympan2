@@ -26,6 +26,7 @@
 
 #include "OGLElement.h"
 #include "Tympan/core/color.h"
+#include "Tympan/gui/dllexport.h"
 
 #include <qstring.h>
 
@@ -33,7 +34,7 @@ class OGLFont;
 /**
  * Classe Text OGL
  */
-class OGLTextElement : public OGLElement
+class TYMPAN_EXPORT OGLTextElement : public OGLElement
 {
 public:
     /**

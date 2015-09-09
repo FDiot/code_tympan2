@@ -20,6 +20,8 @@
 #include <cmath>
 
 #include "Tympan/core/smartptr.h"
+#include "Tympan/core/dllexport.h"
+
 
 #undef min
 #undef max
@@ -27,7 +29,7 @@
 /**
  * Classe definition un objet couleur.
  */
-class OColor
+class COMMON_EXPORT OColor
 {
 public:
     float r, g, b, a;
@@ -150,7 +152,7 @@ inline OColor::operator const float* () const
  Classe utilitaire permettant de gerer les palettes de couleurs pour les cartographies
 */
 
-class TYColorManager
+class COMMON_EXPORT TYColorManager
 {
 public:
     /// Generation de la table de couleurs basee sur une rampe S-Curve ( y = (1-cos(pi*x))/2 )

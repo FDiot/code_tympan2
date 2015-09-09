@@ -23,6 +23,7 @@
 
 #include "TYAcousticRectangle.h"
 #include "Tympan/models/business/acoustic/TYSourceCheminee.h"
+#include "Tympan/gui/dllexport.h"
 
 
 /**
@@ -32,7 +33,7 @@
  * Cette source est conservee dans la source surfacique de la
  * super classe TYAcousticSurface, a l'index 0.
  */
-class TYChemineeSurface: public TYAcousticRectangle
+class TYMPAN_EXPORT TYChemineeSurface: public TYAcousticRectangle
 {
     OPROTODECL(TYChemineeSurface)
     TY_EXTENSION_DECL_ONLY(TYChemineeSurface)

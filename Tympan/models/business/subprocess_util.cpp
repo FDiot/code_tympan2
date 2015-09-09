@@ -150,7 +150,7 @@ std::string _read_environment_variables(QStringList env)
     return variables;
 }
 
-bool must_keep_tmp_files()
+bool TYMPAN_EXPORT  must_keep_tmp_files()
 {
     QStringList appli_env(QProcess::systemEnvironment());
     int tympan_debug_idx = appli_env.indexOf(QRegExp("^TYMPAN_DEBUG=(.*)"));
@@ -165,7 +165,7 @@ bool must_keep_tmp_files()
     return false;
 }
 
-bool init_tmp_file(QTemporaryFile& tmp_file, bool keep_file)
+bool TYMPAN_EXPORT init_tmp_file(QTemporaryFile& tmp_file, bool keep_file)
 {
     if (!tmp_file.open())
     {
@@ -178,7 +178,7 @@ bool init_tmp_file(QTemporaryFile& tmp_file, bool keep_file)
     return true;
 }
 
-bool python(QStringList args, std::string& error_msg)
+bool TYMPAN_EXPORT python(QStringList args, std::string& error_msg)
 {
     OMessageManager& logger =  *OMessageManager::get();
     // Start chrono

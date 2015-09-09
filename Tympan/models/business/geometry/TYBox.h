@@ -24,13 +24,14 @@ class OSegment3D;
 
 #include "TYPoint.h"
 #include "Tympan/models/business/TYColorInterface.h"
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Classe de definition d'une boite.
  * Une boite est representee par ses dimensions en X, Y et Z,
  * ainsi que par un point pour indiquer sa position.
  */
-class TYBox: public TYElement, public TYColorInterface
+class TYMPAN_EXPORT TYBox: public TYElement, public TYColorInterface
 {
     OPROTODECL(TYBox)
     TY_EXTENSION_DECL_ONLY(TYBox)

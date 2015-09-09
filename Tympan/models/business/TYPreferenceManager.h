@@ -28,6 +28,7 @@
 #if TY_USE_IHM
 
 #include "Tympan/models/business/OPreferenceManager.h"
+#include "Tympan/gui/dllexport.h"
 
 class QWidget;
 class QString;
@@ -39,7 +40,7 @@ class TYSpectre;
  * Cette classe statique instancie un objet de type OPreferenceManager
  * et offre une interface statique pour une utilisation simple.
  */
-class TYPreferenceManager
+class TYMPAN_EXPORT TYPreferenceManager
 {
 public:
     /**

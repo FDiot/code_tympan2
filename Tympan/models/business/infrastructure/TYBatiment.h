@@ -26,11 +26,12 @@
 
 #include "Tympan/models/business/geoacoustic/TYAcousticVolumeNode.h"
 #include "TYEtage.h"
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Classe batiment.
  */
-class TYBatiment: public TYAcousticVolumeNode
+class TYMPAN_EXPORT TYBatiment: public TYAcousticVolumeNode
 {
     OPROTODECL(TYBatiment)
     TY_EXTENSION_DECL_ONLY(TYBatiment)

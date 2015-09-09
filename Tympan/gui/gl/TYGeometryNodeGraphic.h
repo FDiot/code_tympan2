@@ -35,13 +35,14 @@
 
 #include "TYElementGraphic.h"
 #include "Tympan/models/business/geometry/TYGeometryNode.h"
+#include "Tympan/gui/dllexport.h"
 
 
 /**
  * \class TYGeometryNodeGraphic
  * \brief classe graphique pour un GeometryNode
  */
-class TYGeometryNodeGraphic : public TYElementGraphic
+class TYMPAN_EXPORT  TYGeometryNodeGraphic : public TYElementGraphic
 {
 public:
     TY_DECL_METIER_GRAPHIC(TYGeometryNode)

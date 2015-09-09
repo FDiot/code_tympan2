@@ -17,11 +17,13 @@
 #define __TY_SOL__
 
 #include "TYVegetation.h"
+#include "Tympan/gui/dllexport.h"
+
 
 /**
-* Classe de definition d'un sol.
-*/
-class TYSol: public TYElement
+ * Classe de definition d'un sol.
+ */
+class TYMPAN_EXPORT TYSol: public TYElement
 {
 	OPROTODECL(TYSol)
 		TY_EXTENSION_DECL_ONLY(TYSol)

@@ -28,7 +28,7 @@
 #include "Tympan/models/common/spectrum_matrix.h"
 #include "Tympan/models/business/acoustic/TYSourcePonctuelle.h"
 #include "TYPointCalcul.h"
-
+#include "Tympan/gui/dllexport.h"
 
 class TYTrajet;
 
@@ -45,7 +45,7 @@ typedef std::map<TYElement*, int> TYMapElementIndex;
 *
 */
 
-class TYResultat: public TYElement
+class TYMPAN_EXPORT TYResultat: public TYElement
 {
     OPROTODECL(TYResultat)
     TY_EXTENSION_DECL_ONLY(TYResultat)

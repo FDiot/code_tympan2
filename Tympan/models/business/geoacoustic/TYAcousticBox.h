@@ -23,11 +23,12 @@
 
 #include "TYAcousticRectangleNode.h"
 #include "TYAcousticVolume.h"
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Permet des creer des boites acoustiques.
  */
-class TYAcousticBox: public TYAcousticVolume
+class TYMPAN_EXPORT TYAcousticBox: public TYAcousticVolume
 {
     OPROTODECL(TYAcousticBox)
     TY_EXTENSION_DECL_ONLY(TYAcousticBox)

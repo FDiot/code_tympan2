@@ -27,7 +27,7 @@
  * \brief Plan defined by its equation : ax+by+cz+d=0.
  *
  */
-class OPlan
+class COMMON_EXPORT OPlan
 {
     // Methods
 public:

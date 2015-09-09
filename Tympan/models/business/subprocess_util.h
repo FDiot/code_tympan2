@@ -25,9 +25,10 @@
 
 #include <qstring.h>
 #include <QTemporaryFile>
+#include "Tympan/gui/dllexport.h"
 
-bool python(QStringList args, std::string& error_msg);
-bool must_keep_tmp_files();
-bool init_tmp_file(QTemporaryFile& tmp_file, bool keep_file=false);
+bool TYMPAN_EXPORT python(QStringList args, std::string& error_msg);
+bool TYMPAN_EXPORT must_keep_tmp_files();
+bool TYMPAN_EXPORT init_tmp_file(QTemporaryFile& tmp_file, bool keep_file=false);
 
 #endif // TY_M_B_SUBPROCESS_UTIL

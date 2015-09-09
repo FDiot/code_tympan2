@@ -2,11 +2,12 @@
 #define TYMPAN_MODELS_COMMON_ATMOSPHERIC_CONDITIONS
 
 #include "Tympan/models/common/spectre.h"
+#include "Tympan/core/dllexport.h"
 
 
 /// XXX \todo Add the entity 'Atmosphere' with attr: pression, temperature,
 /// hygrometry (\note can find these values in the TYCalcul instead of TYSite).
-class AtmosphericConditions
+class COMMON_EXPORT AtmosphericConditions
 {
 public:
     AtmosphericConditions(double static_pressure_, double temperature_, double hygrometry_);

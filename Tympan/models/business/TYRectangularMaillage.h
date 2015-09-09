@@ -26,7 +26,7 @@
 
 #include "Tympan/models/business/geometry/TYRectangle.h"
 #include "TYMaillage.h"
-
+#include "Tympan/gui/dllexport.h"
 
 /**
  * \file TYRectangularMaillage.h
@@ -37,7 +37,7 @@
  * \author Projet_Tympan
  *
  */
-class TYRectangularMaillage: public TYMaillage
+class TYMPAN_EXPORT TYRectangularMaillage: public TYMaillage
 {
     OPROTODECL(TYRectangularMaillage)
     TY_EXT_GRAPHIC_DECL_ONLY(TYRectangularMaillage)

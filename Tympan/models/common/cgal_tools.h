@@ -33,6 +33,7 @@
 
 #include "Tympan/models/common/3d.h"
 #include "Tympan/models/common/plan.h"
+#include "Tympan/core/dllexport.h"
 
 namespace tympan
 {
@@ -65,7 +66,7 @@ inline OVector3D from_cgal(const CGAL_Vector3& cp)
 inline CGAL_Vector3 to_cgal(const OVector3D& op)
 { return CGAL_Vector3(op._x, op._y, op._z); }
 
-CGAL_Plane to_cgal(const OPlan& oplan);
+CGAL_Plane COMMON_EXPORT to_cgal(const OPlan& oplan);
 
 /**
  * @brief return 4 points defining a 3D parallelepiped
@@ -96,7 +97,7 @@ std::deque<CGAL_Point3> build_box(float w, float h, CGAL_Point3 pta, CGAL_Point3
  *
  * The indices of these triangles are returned.
  **/
-std::deque<size_t> intersected_triangles(CGAL_Triangles & triangle_soup,
+std::deque<size_t> COMMON_EXPORT intersected_triangles(CGAL_Triangles & triangle_soup,
         std::deque<CGAL_Point3> query_triangle, float l, float w, float h);
 
 /**
@@ -107,7 +108,7 @@ CGAL_Vector3 normalize(CGAL_Vector3 v);
 /**
  * @brief This class provides triangulating simple polygons without holes
  */
-class PolygonTriangulator
+class COMMON_EXPORT PolygonTriangulator
 {
 
 public:

@@ -21,13 +21,14 @@
 #define __TY_POINT__
 
 #include "Tympan/models/business/TYElement.h"
+#include "Tympan/gui/dllexport.h"
 //#include "Tympan/models/business/TYColorInterface.h"
 
 /**
  * Classe de definition d'un point.
  */
 //class TYPoint: public TYElement, public TYColorInterface, public OPoint3D
-class TYPoint: public TYElement, public OPoint3D
+class TYMPAN_EXPORT TYPoint: public TYElement, public OPoint3D
 {
     OPROTODECL(TYPoint)
     TY_EXTENSION_DECL_ONLY(TYPoint)

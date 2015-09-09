@@ -34,6 +34,8 @@
 
 #include "Tympan/core/defines.h"
 #include "Tympan/core/smartptr.h"
+#include "Tympan/core/dllexport.h"
+
 
 
 /**
@@ -394,8 +396,8 @@ typedef std::map<TYAcousticVolumeNode*, bool> TYMapPtrAcVolNodeBool;
 ///Collection de pointeurs de TYCalcul.
 typedef std::vector<LPTYCalcul> TYTabLPCalcul;
 
-class OVector3D;
-class OPoint3D;
+class COMMON_EXPORT OVector3D;
+class COMMON_EXPORT OPoint3D;
 class OSegment3D;
 
 ///Collection de OVector3D.

@@ -72,7 +72,7 @@
 namespace tympan
 {
 
-void init_registry()
+void TYMPAN_EXPORT init_registry()
 {
     // MetierSolver/DataManagerCore
     OPrototype::add_factory("TYElement", std::move(build_factory<TYElement>()));

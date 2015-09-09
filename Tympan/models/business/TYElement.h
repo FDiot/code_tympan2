@@ -42,6 +42,8 @@
 #include "Tympan/core/macros.h"
 #include "Tympan/core/idgen.h"
 #include "Tympan/models/business/TYNameManager.h"
+#include "Tympan/gui/dllexport.h"
+
 #if TY_USE_IHM
   #include "Tympan/gui/widgets/TYElementWidget.h"
   #include "Tympan/gui/gl/TYElementGraphic.h"
@@ -198,7 +200,7 @@ namespace tympan
  */
 
 
-class OPrototype
+class TYMPAN_EXPORT OPrototype
 {
     // Methodes
 public:
@@ -435,7 +437,7 @@ T *downcast(TYElement * elt)
 /**
  * Classe de base des composants et elements metiers.
  */
-class TYElement : public IRefCount, public OPrototype
+class TYMPAN_EXPORT TYElement : public IRefCount, public OPrototype
 {
     OPROTODECL(TYElement)
 

@@ -28,6 +28,7 @@
 #include "Tympan/models/business/acoustic/TYTrafic.h"
 
 #include "RoadEmissionNMPB08.h"
+#include "Tympan/gui/dllexport.h"
 
 
 ///Noeud geometrique de type TYRoute.
@@ -40,7 +41,7 @@ typedef std::vector<LPTYRouteGeoNode> TYTabRouteGeoNode;
 /**
  * Comprend les proprietes acoustiques et geometriques d'une route.
  */
-class TYRoute: public TYAcousticLine
+class TYMPAN_EXPORT TYRoute: public TYAcousticLine
 {
 
     FRIEND_TEST(TestRoads, xml_roundtrip);

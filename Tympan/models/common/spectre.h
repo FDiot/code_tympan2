@@ -21,6 +21,7 @@
 #include <ostream>
 
 #include "Tympan/core/macros.h"
+#include "Tympan/core/dllexport.h"
 
 ///Type de spectre.
 enum TYSpectreType { SPECTRE_TYPE_ATT, SPECTRE_TYPE_ABSO, SPECTRE_TYPE_LW, SPECTRE_TYPE_LP, SPECTRE_TYPE_AUTRE };
@@ -46,7 +47,7 @@ typedef std::vector<double> OTabFreq;
  * @author Projet_Tympan
  *
  */
-class OSpectre
+class COMMON_EXPORT OSpectre
 {
     // Methodes
 public:
@@ -339,7 +340,7 @@ typedef std::vector<std::vector<OSpectre> > OTab2DSpectre;
  * Permet de stocker des valeurs de puissance accoustique pour differentes frequences.
  *
  */
-class OSpectreComplex : public OSpectre
+class COMMON_EXPORT OSpectreComplex : public OSpectre
 {
     // Methodes
 public:

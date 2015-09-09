@@ -13,13 +13,14 @@
 typedef struct t_ply_ *p_ply; // Avoid including rply.h here
 
 #include "altimetry_file_reader.h"
+#include "Tympan/core/dllexport.h"
 
 namespace tympan {
 
     /**
      * @brief read an Altimetry from a PLY file.
      */
-    class AltimetryPLYReader:
+    class COMMON_EXPORT AltimetryPLYReader:
         public IMeshReader
     {
     public:

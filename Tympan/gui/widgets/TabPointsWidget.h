@@ -3,8 +3,10 @@
 
 #include <qtablewidget.h>
 #include "Tympan/models/business/TYDefines.h"
+#include "Tympan/gui/dllexport.h"
 
-class TabPointsWidget : public QTableWidget
+
+class TYMPAN_EXPORT TabPointsWidget : public QTableWidget
 {
     Q_OBJECT
 

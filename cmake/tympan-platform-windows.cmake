@@ -20,7 +20,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zm1000")
 ## We thus choose to force the 'working' way to compile depending on
 ## the platform, awaiting a real fix when splitting the application
 ## into several applications, libraries and solvers. (TODO)
-set(TYMPAN_COMPONENT_TYPE STATIC CACHE STRING 
+set(TYMPAN_COMPONENT_TYPE SHARED CACHE STRING 
   "For now, on Windows, it is only possible to build the components as static libs." 
   FORCE)
 set_property(CACHE TYMPAN_COMPONENT_TYPE PROPERTY STRINGS STATIC)

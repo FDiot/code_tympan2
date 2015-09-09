@@ -25,6 +25,7 @@
 
 
 #include <QWidget>
+#include "Tympan/gui/dllexport.h"
 
 class QString;
 class TYElement;
@@ -39,7 +40,7 @@ class TYElement;
  * \class TYWidget
  * \brief classe de l'objet IHM pour un objet metier de type TYElement
  */
-class TYWidget : public QWidget
+class TYMPAN_EXPORT TYWidget : public QWidget
 {
     Q_OBJECT
 

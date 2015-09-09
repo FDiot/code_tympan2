@@ -21,6 +21,7 @@
 #define __TY_ACOUSTICRECTANGLENODE__
 
 #include "TYAcousticSurfaceNode.h"
+#include "Tympan/gui/dllexport.h"
 
 
 typedef std::vector<LPTYRectangle> TYTabLPRectangle;
@@ -28,7 +29,7 @@ typedef std::vector<LPTYRectangle> TYTabLPRectangle;
 /**
  * Composee d'un ou plusieurs rectangles acoustiques.
  */
-class TYAcousticRectangleNode: public TYAcousticSurfaceNode
+class TYMPAN_EXPORT TYAcousticRectangleNode: public TYAcousticSurfaceNode
 {
     OPROTODECL(TYAcousticRectangleNode)
     TY_EXTENSION_DECL_ONLY(TYAcousticRectangleNode)

@@ -23,7 +23,7 @@
 
 #include "TYTerrain.h"
 #include "TYCourbeNiveau.h"
-
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Classe pour la representation d'un plan eau.
@@ -31,7 +31,7 @@
  * delimitation ont a meme altitude.
  * Les plans d'eau sont pris en compte pour la generation de l'altimetrie.
  */
-class TYPlanEau: public TYTerrain
+class TYMPAN_EXPORT TYPlanEau: public TYTerrain
 {
     OPROTODECL(TYPlanEau)
     TY_EXTENSION_DECL_ONLY(TYPlanEau)

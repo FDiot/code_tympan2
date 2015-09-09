@@ -23,12 +23,12 @@
 #include "TYAcousticCircle.h"
 #include "Tympan/models/business/acoustic/TYSourceSurfacic.h"
 #include "TYAcousticVolume.h"
-
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Permet de creer des volumes acoustiques cylindriques.
  */
-class TYAcousticCylinder: public TYAcousticVolume
+class TYMPAN_EXPORT TYAcousticCylinder: public TYAcousticVolume
 {
     OPROTODECL(TYAcousticCylinder)
     TY_EXTENSION_DECL_ONLY(TYAcousticCylinder)

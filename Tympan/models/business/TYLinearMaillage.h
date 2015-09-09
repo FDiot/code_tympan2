@@ -26,6 +26,7 @@
 
 #include "Tympan/models/business/geometry/TYSegment.h"
 #include "TYMaillage.h"
+#include "Tympan/gui/dllexport.h"
 
 /**
  * \file TYLinearMaillage.h
@@ -36,7 +37,7 @@
  * \date 2008/01/21
  *
  */
-class TYLinearMaillage: public TYMaillage
+class TYMPAN_EXPORT TYLinearMaillage: public TYMaillage
 {
     OPROTODECL(TYLinearMaillage)
     TY_EXT_GRAPHIC_DECL_ONLY(TYLinearMaillage)

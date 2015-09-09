@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
+SET(BUILD_SHARED_LIBS  TRUE)
+
 # Adding GTest include in the non-test tree is required to enable gtest_prod.h
 include_directories (${GTEST_INCLUDE_DIR})
 
@@ -108,6 +110,7 @@ file(GLOB TYMPAN_SOLVER_MODEL_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     )
 add_library(tympan_solver_model ${TYMPAN_COMPONENT_TYPE} ${TYMPAN_SOLVER_MODEL_SRCS})
 set_property(TARGET tympan_solver_model PROPERTY FOLDER "Tympan/solver")
+target_link_libraries(tympan_solver_model tympan_common)
 install_tympan_component(tympan_solver_model)
 
 

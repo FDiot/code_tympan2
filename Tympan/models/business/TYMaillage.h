@@ -22,6 +22,7 @@
 #include "Tympan/models/business/TYPointCalcul.h"
 #include "Tympan/models/business/TYPalette.h"
 #include "Tympan/models/business/TYPanel.h"
+#include "Tympan/gui/dllexport.h"
 
 class TYCalcul;
 
@@ -48,7 +49,7 @@ struct MTriangle
  * \date 2008/01/21
  *
  */
-class TYMaillage: public TYElement
+class TYMPAN_EXPORT TYMaillage: public TYElement
 {
     OPROTODECL(TYMaillage)
     TY_EXTENSION_DECL_ONLY(TYMaillage)

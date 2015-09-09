@@ -19,6 +19,7 @@
 #include "Tympan/models/business/geometry/TYGeometryNode.h"
 #include "Tympan/models/business/TYColorInterface.h"
 #include "Tympan/models/business/TYPointCalcul.h"
+#include "Tympan/gui/dllexport.h"
 
 
 /**
@@ -29,7 +30,7 @@
  * \version v 1.1
  * \author Projet_Tympan
  */
-class TYPointControl: public TYPointCalcul, public TYColorInterface
+class TYMPAN_EXPORT TYPointControl: public TYPointCalcul, public TYColorInterface
 {
     OPROTODECL(TYPointControl)
     TY_EXTENSION_DECL_ONLY(TYPointControl)

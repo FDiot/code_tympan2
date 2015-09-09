@@ -22,12 +22,12 @@
 
 
 #include "Tympan/models/business/geoacoustic/TYAcousticLine.h"
-
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Classe de definition du chemin d'un cours d'eau et de ses proprietes acoustiques.
  */
-class TYCoursEau: public TYAcousticLine
+class TYMPAN_EXPORT TYCoursEau: public TYAcousticLine
 {
     OPROTODECL(TYCoursEau)
     TY_EXTENSION_DECL_ONLY(TYCoursEau)

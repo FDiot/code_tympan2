@@ -27,6 +27,7 @@
 #include "TYCalcul.h"
 #include "Tympan/models/business/infrastructure/TYSiteNode.h"
 #include "TYPointControl.h"
+#include "Tympan/gui/dllexport.h"
 
 #include <iostream>
 #include <vector>
@@ -43,7 +44,7 @@ using namespace std;
  * \author Projet_Tympan
  *
  */
-class TYProjet: public TYElement
+class TYMPAN_EXPORT TYProjet: public TYElement
 {
     OPROTODECL(TYProjet)
     TY_EXTENSION_DECL_ONLY(TYProjet)

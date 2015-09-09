@@ -17,6 +17,7 @@
 #define TY_MC_ACOUSTIC_PATH
 
 #include "Tympan/models/common/3d.h"
+#include "Tympan/core/dllexport.h"
 
 enum ACOUSTIC_EVENT_TYPES
 {
@@ -32,7 +33,7 @@ enum ACOUSTIC_EVENT_TYPES
 
 class Event;
 
-class acoustic_event
+class COMMON_EXPORT acoustic_event
 {
     /*!
     * \class acoustic_event
@@ -70,7 +71,7 @@ typedef std::vector<acoustic_event*> tab_acoustic_events;
 class Ray;
 class IGeometryModifier;
 
-class acoustic_path
+class COMMON_EXPORT acoustic_path
 {
 public:
 	acoustic_path();

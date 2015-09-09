@@ -25,6 +25,7 @@
 #include "Tympan/core/interfaces.h"
 #include "Tympan/core/smartptr.h"
 #include "Tympan/core/plugin.h"
+#include "Tympan/gui/dllexport.h"
 
 #if TY_COMPILER == TY_COMPILER_MSVC
 #    define LIB_HANDLE hInstance
@@ -69,7 +70,7 @@ typedef SmartPtr<TYPluginManager> LPTYPluginManager;
 // UUID of the Default Solver
 #define DEFAULT_SOLVER_UUID "{A98B320C-44C4-47a9-B689-1DD352DAA8B2}"
 
-class TYPluginManager : public IRefCount
+class TYMPAN_EXPORT TYPluginManager : public IRefCount
 {
 public:
     // Liste des plug-ins

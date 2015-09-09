@@ -10,7 +10,7 @@ namespace tympan
 {
 typedef OSpectre Spectrum;
 
-class SpectrumMatrix
+class COMMON_EXPORT SpectrumMatrix
 {
 public:
 

@@ -25,11 +25,12 @@
 
 
 #include "Tympan/models/business/geoacoustic/TYAcousticLine.h"
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Comprend les proprietes acoustiques et geometriques d'un reseau de transport.
  */
-class TYReseauTransport: public TYAcousticLine
+class TYMPAN_EXPORT TYReseauTransport: public TYAcousticLine
 {
     OPROTODECL(TYReseauTransport)
     TY_EXTENSION_DECL_ONLY(TYReseauTransport)

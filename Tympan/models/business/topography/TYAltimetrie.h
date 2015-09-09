@@ -25,13 +25,15 @@
 #include "Tympan/models/business/exceptions.h"
 #include "Tympan/models/common/delaunay_maker.h"
 #include "Tympan/models/common/3d.h"
+#include "Tympan/gui/dllexport.h"
+
 
 /**
  * \class TYAltimetrie
  * \brief Assigne une altitude a chaque point de l'espace.
  * \author Projet_Tympan
  */
-class TYAltimetrie: public TYElement
+class TYMPAN_EXPORT TYAltimetrie: public TYElement
 {
     OPROTODECL(TYAltimetrie)
     TY_EXTENSION_DECL_ONLY(TYAltimetrie)

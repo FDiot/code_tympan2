@@ -25,6 +25,7 @@
 #include <math.h>
 #include <vector>
 #include <ostream>
+#include "Tympan/core/dllexport.h"
 
 // Defines pour les calculs d'intersection
 ///Les elements sont confondus.
@@ -224,7 +225,7 @@ inline int BORNE(int a)
  * \class OCoord3D
  * \brief The 3D coordinate class.
  */
-class OCoord3D
+class COMMON_EXPORT OCoord3D
 {
 public:
     OCoord3D();
@@ -288,7 +289,7 @@ public:
  * \brief The 3D vector class.
  */
 
-class OVector3D: public OCoord3D
+class COMMON_EXPORT OVector3D: public OCoord3D
 {
 public:
     OVector3D();
@@ -470,10 +471,10 @@ inline OCoord3D operator + (const OCoord3D& coord, const OVector3D& vect)
  * \class OPoint3D
  * \brief The 3D point class.
  */
-class OPoint3D;
+class COMMON_EXPORT OPoint3D;
 typedef std::vector<OPoint3D> TabPoint3D;
 
-class OPoint3D: public OCoord3D
+class COMMON_EXPORT OPoint3D: public OCoord3D
 {
     // Methods
 public:
@@ -606,7 +607,7 @@ public:
  * \class  OMatrix
  * \brief The 4x4 matrix class.
  */
-class OMatrix
+class COMMON_EXPORT OMatrix
 {
 public:
     OMatrix();
@@ -913,7 +914,7 @@ OPoint3D operator*(const OMatrix& mat, const OPoint3D& pt);
  * \class OGeometrie
  * \brief Class utilitaire de geometrie.
  */
-class OGeometrie
+class COMMON_EXPORT OGeometrie
 {
 public:
     /**
@@ -1069,7 +1070,7 @@ public:
  * \class OSegment3D
  * \brief Classe de definition d'un segment.
  */
-class OSegment3D
+class COMMON_EXPORT OSegment3D
 {
 public:
     OSegment3D();
@@ -1185,7 +1186,7 @@ public:
  * \class ORepere3D
  * \brief 3D Repere with a point and 3 vectors.
  */
-class ORepere3D
+class COMMON_EXPORT ORepere3D
 {
 public:
     ORepere3D();
@@ -1268,7 +1269,7 @@ public:
  * \brief The box class.
  */
 
-class OBox
+class COMMON_EXPORT OBox
 {
 public:
     OBox();
@@ -1350,7 +1351,7 @@ public:
  * \class OBox2
  * \brief classe de definition d'une boite (pas forcement parallele aux axes a la difference de la OBox)
  */
-class OBox2 : public OBox
+class COMMON_EXPORT OBox2 : public OBox
 {
     // Methods
 public:
@@ -1479,7 +1480,7 @@ public:
  *
  * Then the Hessian normal form of the plane is: N.X = -p
  */
-class OHPlane3D
+class COMMON_EXPORT OHPlane3D
 {
 public:
     OHPlane3D();

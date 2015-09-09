@@ -31,6 +31,7 @@
 #include "Tympan/models/business/TYElement.h"
 #include "TYRepere.h"
 #include "Tympan/models/common/3d.h"
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Template pour la gestion des noeuds de geometrie.
@@ -45,7 +46,7 @@ typedef std::map<TYElement*, TYGeometryNode*> TYMapPtrGeoNode;
 ///Liste ordonnee de pointeurs de TYElement.
 typedef std::list<TYGeometryNode*> TYListPtrGeoNode;
 
-class TYGeometryNode: public TYElement
+class TYMPAN_EXPORT TYGeometryNode: public TYElement
 {
     OPROTODECL(TYGeometryNode)
 public:

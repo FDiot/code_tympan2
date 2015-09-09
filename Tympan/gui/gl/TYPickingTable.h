@@ -33,6 +33,7 @@
 #endif // _MSC_VER > 1000
 
 #include "Tympan/models/business/TYElement.h"
+#include "Tympan/gui/dllexport.h"
 
 ///Collection de TYElement*.
 typedef std::vector<TYElement*> TYTabPtrElement;
@@ -42,7 +43,7 @@ typedef std::vector<TYElement*> TYTabPtrElement;
  * \class TYPickingTable
  * \brief classe graphique pour la gestion de la table de correspondanceindice/element pour le picking
  */
-class TYPickingTable
+class TYMPAN_EXPORT TYPickingTable
 {
 
     // Methodes

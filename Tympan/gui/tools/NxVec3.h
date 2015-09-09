@@ -16,10 +16,11 @@
 #ifndef NXVEC3_H
 #define NXVEC3_H
 #include <cmath>
+#include "Tympan/gui/dllexport.h"
 
 #define NxReal double
 
-class NxVec3
+class TYMPAN_EXPORT NxVec3
 {
 public:
     NxVec3();

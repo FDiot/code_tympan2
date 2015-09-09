@@ -33,6 +33,7 @@
 //Added by qt3to4:
 #include <QGridLayout>
 #include <QLabel>
+#include "Tympan/gui/dllexport.h"
 
 #include <vector>
 using std::vector;
@@ -57,7 +58,7 @@ class QRadioButton;
  * \class TYEtatsWidget
  * \brief classe de l'outil IHM pour les Etats
  */
-class TYEtatsWidget : public QDialog
+class TYMPAN_EXPORT TYEtatsWidget : public QDialog
 {
     Q_OBJECT
 

@@ -23,6 +23,7 @@
 #include "Tympan/models/business/infrastructure/TYTopographie.h"
 #include "Tympan/models/business/infrastructure/TYInfrastructure.h"
 #include "Tympan/models/business/TYCalcul.h"
+#include "Tympan/gui/dllexport.h"
 
 /// Systeme SIG
 typedef enum {TYMPAN, LAMBERTIIe, GPS} systemSIG;
@@ -35,7 +36,7 @@ typedef SmartPtr<TYSiteNodeGeoNode> LPTYSiteNodeGeoNode;
 ///Collection de noeuds geometriques de type TYSiteNode.
 typedef std::vector<LPTYSiteNodeGeoNode> TYTabSiteNodeGeoNode;
 
-class TYSiteNode: public TYElement
+class TYMPAN_EXPORT TYSiteNode: public TYElement
 {
     OPROTODECL(TYSiteNode)
     TY_EXTENSION_DECL_ONLY(TYSiteNode)

@@ -24,11 +24,12 @@
 #include "Tympan/models/business/infrastructure/TYReseauTransport.h"
 #include "Tympan/models/business/infrastructure/TYRoute.h"
 #include "Tympan/models/business/acoustic/TYUserSourcePonctuelle.h"
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Centralise les elements d'infrastructure.
  */
-class TYInfrastructure: public TYElement
+class TYMPAN_EXPORT TYInfrastructure: public TYElement
 {
     OPROTODECL(TYInfrastructure)
     TY_EXTENSION_DECL_ONLY(TYInfrastructure)

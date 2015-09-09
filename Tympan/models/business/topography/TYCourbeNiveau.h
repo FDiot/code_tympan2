@@ -23,11 +23,13 @@
 
 #include "Tympan/models/business/geometry/TYGeometryNode.h"
 #include "Tympan/models/business/TYColorInterface.h"
+#include "Tympan/gui/dllexport.h"
+
 
 /**
  * Permet de creer une altimetrie.
  */
-class TYCourbeNiveau: public TYElement, public TYColorInterface
+class TYMPAN_EXPORT TYCourbeNiveau: public TYElement, public TYColorInterface
 {
     OPROTODECL(TYCourbeNiveau)
     TY_EXTENSION_DECL_ONLY(TYCourbeNiveau)

@@ -34,6 +34,7 @@
 #endif // WIN32
 
 #include "Tympan/core/smartptr.h"
+#include "Tympan/gui/dllexport.h"
 
 #include <map>
 #include <string>
@@ -47,7 +48,7 @@ typedef SmartPtr<TYImageManager> LPTYImageManager;
 /**
  * Gestionnaire d'image.
  */
-class TYImageManager : public IRefCount
+class TYMPAN_EXPORT TYImageManager : public IRefCount
 {
 public:
     /**

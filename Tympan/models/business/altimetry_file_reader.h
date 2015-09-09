@@ -27,7 +27,7 @@ namespace tympan {
     };
 
 
-    class IMeshReader
+    class COMMON_EXPORT IMeshReader
     {
     public:
         /// @brief Type of the points array returned

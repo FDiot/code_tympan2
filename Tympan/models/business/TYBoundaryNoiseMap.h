@@ -26,6 +26,7 @@
 
 #include "Tympan/models/business/geometry/TYRectangle.h"
 #include "TYMaillage.h"
+#include "Tympan/gui/dllexport.h"
 
 
 /**
@@ -37,7 +38,7 @@
  * \author Projet_Tympan
  *
  */
-class TYBoundaryNoiseMap: public TYMaillage
+class TYMPAN_EXPORT TYBoundaryNoiseMap: public TYMaillage
 {
     OPROTODECL(TYBoundaryNoiseMap)
     TY_EXT_GRAPHIC_DECL_ONLY(TYBoundaryNoiseMap)

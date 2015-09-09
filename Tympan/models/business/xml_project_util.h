@@ -9,6 +9,8 @@
 #define TYMPAN__XML_PROJECT_UTIL_HPP__INCLUDED
 
 #include "Tympan/models/business/TYProjet.h"
+#include "Tympan/gui/dllexport.h"
+
 
 namespace tympan
 {
@@ -19,7 +21,7 @@ namespace tympan
      *                made to refer to the loaded \c TYProjet.
      * @return true if the project could be loader, false otherwise
      */
-    LPTYProjet load_project(const char * filename);
+    LPTYProjet TYMPAN_EXPORT load_project(const char * filename);
 
     /**
      * @brief save a project into an XML file
@@ -27,7 +29,7 @@ namespace tympan
      * @param project : pointer to the project to save
      * @return true if the project could be saved, false otherwise
      */
-    void save_project(const char * filename, const LPTYProjet& project);
+    void TYMPAN_EXPORT save_project(const char * filename, const LPTYProjet& project);
 
 } /* namespace tympan */
 

@@ -27,6 +27,7 @@
 #include <qmap.h>
 #include <qstring.h>
 #include <qdom.h>
+#include "Tympan/gui/dllexport.h"
 
 #include "OXMLTreeManager.h"
 
@@ -37,7 +38,7 @@
  * It can be used to localize the plugins or the application.
  */
 
-class OLocalizator
+class TYMPAN_EXPORT OLocalizator
 {
 public:
     /**

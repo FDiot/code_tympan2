@@ -21,6 +21,7 @@
 #include <qstring.h>
 
 #include "Tympan/core/smartptr.h"
+#include "Tympan/core/dllexport.h"
 
 #define MSG_DEBUG   0x0001
 #define MSG_BENCH   0x0002
@@ -30,7 +31,7 @@
 #define MSG_FATAL   0x0012
 
 
-class OMessageManager;
+class COMMON_EXPORT OMessageManager;
 ///Smart pointer sur OMessageManager.
 typedef SmartPtr<OMessageManager> LPOMessageManager;
 

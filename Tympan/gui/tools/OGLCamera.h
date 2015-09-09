@@ -36,7 +36,7 @@
 
 typedef enum {PARALLEL, PERSPECTIVE, FREE} CameraType;
 
-class OGLCamera
+class TYMPAN_EXPORT OGLCamera
 {
 
 public:

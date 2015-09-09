@@ -26,7 +26,7 @@
  * \class OTriangle
  * \brief Classe de definition d'un triangle
  */
-class OTriangle
+class COMMON_EXPORT OTriangle
 {
 public:
     OTriangle(int p1, int p2, int p3);

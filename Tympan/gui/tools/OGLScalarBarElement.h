@@ -27,6 +27,7 @@
 #include "OGLElement.h"
 #include "Tympan/core/color.h"
 #include "Tympan/models/common/3d.h"
+#include "Tympan/gui/dllexport.h"
 
 #include <qstring.h>
 
@@ -36,7 +37,7 @@ class OGLFont;
 /**
  * Classe de scalarBar OGL
  */
-class OGLScalarBarElement : public OGLElement
+class TYMPAN_EXPORT OGLScalarBarElement : public OGLElement
 {
 public:
     /**

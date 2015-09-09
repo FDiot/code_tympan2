@@ -21,6 +21,7 @@
 #define __O_SIZEMANAGER__
 
 #include "Tympan/core/smartptr.h"
+#include "Tympan/gui/dllexport.h"
 
 // Smart pointer sur OSizeManager.
 class OSizeManager;
@@ -34,7 +35,7 @@ typedef SmartPtr<OSizeManager> LPOSizeManager;
  * Il serait bien que les donnees relatives a la taille soit, par la suite,
  * plus accessible.
  */
-class OSizeManager : public IRefCount
+class TYMPAN_EXPORT OSizeManager : public IRefCount
 {
 public:
     /**

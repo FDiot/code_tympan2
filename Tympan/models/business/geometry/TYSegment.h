@@ -24,6 +24,7 @@
 #include "Tympan/models/business/TYColorInterface.h"
 #include "Tympan/models/common/3d.h"
 #include "TYPoint.h"
+#include "Tympan/gui/dllexport.h"
 
 // TYRectangle.h est inclu a la fin de la declaration de TYSegment.
 class TYRectangle;
@@ -31,7 +32,7 @@ class TYRectangle;
 /**
  * Classe de definition d'un segment.
  */
-class TYSegment: public TYElement, public OSegment3D, public TYColorInterface
+class TYMPAN_EXPORT TYSegment: public TYElement, public OSegment3D, public TYColorInterface
 {
     OPROTODECL(TYSegment)
     TY_EXTENSION_DECL_ONLY(TYSegment)

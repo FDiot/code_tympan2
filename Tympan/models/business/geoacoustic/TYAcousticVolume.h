@@ -26,12 +26,12 @@
 #include "Tympan/models/business/material/TYMateriauConstruction.h"
 #include "Tympan/models/business/acoustic/TYSourcePonctuelle.h"
 #include "Tympan/models/business/geometry/TYSegment.h"
-
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Permet de creer de elements acoustiques volumiques.
  */
-class TYAcousticVolume: public TYElement, public TYColorInterface, public TYAcousticInterface, public TYVolumeInterface
+class TYMPAN_EXPORT TYAcousticVolume: public TYElement, public TYColorInterface, public TYAcousticInterface, public TYVolumeInterface
 {
     OPROTODECL(TYAcousticVolume)
     TY_EXTENSION_DECL_ONLY(TYAcousticVolume)

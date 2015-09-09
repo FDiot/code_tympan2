@@ -12,11 +12,12 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
+#include "Tympan/core/dllexport.h"
 
 #ifndef TY_MC_SONIE_ZWICKER_1991
 #define TY_MC_SONIE_ZWICKER_1991
 
-class sonie
+class COMMON_EXPORT sonie
 {
 public :
     sonie(double* vectToct, const unsigned short& champ = 0);

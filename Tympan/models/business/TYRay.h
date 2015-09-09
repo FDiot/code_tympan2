@@ -31,7 +31,7 @@
 class TYSourcePonctuelle;
 class TYPointCalcul;
 
-class TYRay: public TYElement, public acoustic_path
+class COMMON_EXPORT TYRay: public TYElement, public acoustic_path
 {
     OPROTODECL(TYRay)
     TY_EXT_GRAPHIC_DECL_ONLY(TYRay)

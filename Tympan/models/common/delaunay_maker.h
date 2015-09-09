@@ -27,7 +27,7 @@
  * \brief Triangulation de Delaunay
  */
 
-class ODelaunayMaker
+class COMMON_EXPORT ODelaunayMaker
 {
 public :
     /// constructeur

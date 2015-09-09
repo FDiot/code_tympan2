@@ -30,6 +30,7 @@
 #include "Tympan/core/defines.h"
 #include <map>
 #include <QString>
+#include "Tympan/gui/dllexport.h"
 
 /**
  * \struct OPrefMap
@@ -80,7 +81,7 @@ struct ODirMap
  *
  * \author Projet_Tympan
  */
-class OPreferenceManager
+class TYMPAN_EXPORT OPreferenceManager
 {
 public:
     /**

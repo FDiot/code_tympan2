@@ -24,13 +24,14 @@
 #include "Tympan/models/business/geometry/TYPoint.h"
 #include "Tympan/models/business/geometry/TYGeometryNode.h"
 #include "Tympan/models/business/acoustic/TYSpectre.h"
+#include "Tympan/gui/dllexport.h"
 
 /**
  * \file TYPointCalcul.h
  * \class TYPointCalcul
  * \brief  Classe de definition d'un point de calcul.C'est une classe derivee a TYPoint avec en plus un spectrepour contenir le resultat du calcul.
  */
-class TYPointCalcul: public TYPoint
+class TYMPAN_EXPORT TYPointCalcul: public TYPoint
 {
     OPROTODECL(TYPointCalcul)
     TY_EXTENSION_DECL_ONLY(TYPointCalcul)

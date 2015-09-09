@@ -31,11 +31,12 @@ class OSegment3D;
 #include "TYMachine.h"
 #include "Tympan/models/business/acoustic/TYUserSourcePonctuelle.h"
 #include "TYDalle.h"
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Centralise les elements d'un etage.
  */
-class TYEtage: public TYAcousticVolume
+class TYMPAN_EXPORT TYEtage: public TYAcousticVolume
 {
     OPROTODECL(TYEtage)
     TY_EXTENSION_DECL_ONLY(TYEtage)

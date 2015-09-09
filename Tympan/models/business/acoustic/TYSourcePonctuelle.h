@@ -25,7 +25,7 @@
 #include "Tympan/models/business/TYColorInterface.h"
 #include "TYSource.h"
 #include "TYDirectivity.h"
-
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Definition des types de rayonnement.
@@ -43,7 +43,7 @@ class OSegment3D;
 /**
  * Classe de definition d'une source ponctuelle.
  */
-class TYSourcePonctuelle: public TYSource, public TYColorInterface
+class TYMPAN_EXPORT TYSourcePonctuelle: public TYSource, public TYColorInterface
 {
     OPROTODECL(TYSourcePonctuelle)
     TY_EXTENSION_DECL_ONLY(TYSourcePonctuelle)

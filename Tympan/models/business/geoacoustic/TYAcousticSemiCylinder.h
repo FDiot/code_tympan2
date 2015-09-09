@@ -25,12 +25,13 @@
 #include "Tympan/models/business/acoustic/TYSourceSurfacic.h"
 #include "TYAcousticRectangle.h"
 #include "TYAcousticVolume.h"
+#include "Tympan/gui/dllexport.h"
 
 
 /**
  * Permet de creer des volumes acoustiques semi-cylindriques.
  */
-class TYAcousticSemiCylinder: public TYAcousticVolume
+class TYMPAN_EXPORT TYAcousticSemiCylinder: public TYAcousticVolume
 {
     OPROTODECL(TYAcousticSemiCylinder)
     TY_EXTENSION_DECL_ONLY(TYAcousticSemiCylinder)

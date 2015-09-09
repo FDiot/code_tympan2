@@ -25,11 +25,12 @@
 #include "Tympan/models/business/geometry/TYGeometryNode.h"
 #include "Tympan/models/business/TYColorInterface.h"
 #include "Tympan/models/business/material/TYSol.h"
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Permet d'attribuer des proprietes acoustiques a une zone d'altimetrie.
  */
-class TYTerrain: public TYElement, public TYColorInterface
+class TYMPAN_EXPORT TYTerrain: public TYElement, public TYColorInterface
 {
     OPROTODECL(TYTerrain)
     TY_EXTENSION_DECL_ONLY(TYTerrain)

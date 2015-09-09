@@ -24,12 +24,13 @@
 #include "TYAcousticCylinder.h"
 #include "TYAcousticSemiCylinder.h"
 #include "TYAcousticBox.h"
+#include "Tympan/gui/dllexport.h"
 
 
 /**
  * Composee d'un ou plusieurs volumes acoustiques..
  */
-class TYAcousticVolumeNode: public TYElement, public TYColorInterface, public TYAcousticInterface, public TYVolumeInterface
+class TYMPAN_EXPORT TYAcousticVolumeNode: public TYElement, public TYColorInterface, public TYAcousticInterface, public TYVolumeInterface
 {
     OPROTODECL(TYAcousticVolumeNode)
     TY_EXTENSION_DECL_ONLY(TYAcousticVolumeNode)

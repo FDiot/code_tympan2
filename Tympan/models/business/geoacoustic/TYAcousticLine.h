@@ -26,11 +26,12 @@
 #include "Tympan/models/business/geometry/TYGeometryNode.h"
 #include "Tympan/models/business/TYColorInterface.h"
 #include "TYAcousticInterface.h"
+#include "Tympan/gui/dllexport.h"
 
 /**
 * Permet de creer de elements acoustiques lineaires.
 */
-class TYAcousticLine: public TYSource, public TYColorInterface
+class TYMPAN_EXPORT TYAcousticLine: public TYSource, public TYColorInterface
 {
     OPROTODECL(TYAcousticLine)
     TY_EXTENSION_DECL_ONLY(TYAcousticLine)

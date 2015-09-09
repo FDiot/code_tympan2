@@ -27,13 +27,14 @@
 #define __TY_TOOLBUTTON__
 
 #include <qtoolbutton.h>
+#include "Tympan/gui/dllexport.h"
 class QColor;
 
 /**
  * \class TYToolButton
  * \brief Permet de gerer la couleur des ToolButtons.
  */
-class TYToolButton : public QToolButton
+class TYMPAN_EXPORT TYToolButton : public QToolButton
 {
     Q_OBJECT
 

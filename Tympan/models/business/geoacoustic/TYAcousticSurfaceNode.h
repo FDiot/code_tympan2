@@ -31,12 +31,13 @@
 #include "TYAcousticSemiCircle.h"
 #include "TYAcousticRectangle.h"
 #include "TYAcousticVolume.h"
+#include "Tympan/gui/dllexport.h"
 
 
 /**
  * Composee d'une ou plusieurs surfaces acoustiques..
  */
-class TYAcousticSurfaceNode: public TYElement, public TYColorInterface, public TYAcousticInterface, public TYSurfaceInterface
+class TYMPAN_EXPORT TYAcousticSurfaceNode: public TYElement, public TYColorInterface, public TYAcousticInterface, public TYSurfaceInterface
 {
     OPROTODECL(TYAcousticSurfaceNode)
     TY_EXTENSION_DECL_ONLY(TYAcousticSurfaceNode)

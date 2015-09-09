@@ -27,6 +27,7 @@
 #include "OGLElement.h"
 #include "Tympan/core/color.h"
 #include "Tympan/models/common/3d.h"
+#include "Tympan/gui/dllexport.h"
 
 #include <qstring.h>
 
@@ -35,7 +36,7 @@ class OGLLine;
 /**
  * Classe de ligne OGL
  */
-class OGLLineElement : public OGLElement
+class TYMPAN_EXPORT OGLLineElement : public OGLElement
 {
 public:
     /**

@@ -24,6 +24,7 @@
 
 #include <qprogressdialog.h>
 #include <QLabel>
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Boite de dialogue de progression.
@@ -78,7 +79,7 @@ public:
  * pour indiquer l'avancement d'operations longues ou lentes.
  * Il est aussi possible d'annuler l'operation en cours.
  */
-class TYProgressManager
+class TYMPAN_EXPORT TYProgressManager
 {
 public:
     /**
@@ -166,7 +167,7 @@ class QWidget;
  * pas l'API Qt. Seule la declaration des methodes est faite
  * afin de satisfaire les appels correspondant depuis le DataManager.
  */
-class TYProgressManager
+class TYMPAN_EXPORT TYProgressManager
 {
 public:
     static void create(QWidget* pParent, const char* name = 0) { }

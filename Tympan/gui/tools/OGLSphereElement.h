@@ -27,6 +27,8 @@
 #include "OGLElement.h"
 #include "Tympan/core/color.h"
 #include "Tympan/models/common/3d.h"
+#include "Tympan/gui/dllexport.h"
+
 
 #include <qstring.h>
 
@@ -35,7 +37,7 @@ class OGLSphere;
 /**
  * Classe de sphere OGL
  */
-class OGLSphereElement : public OGLElement
+class TYMPAN_EXPORT OGLSphereElement : public OGLElement
 {
 public:
     /**

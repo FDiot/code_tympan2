@@ -23,6 +23,7 @@
 #include "Tympan/models/business/topography/TYCoursEau.h"
 #include "Tympan/models/business/topography/TYAltimetrie.h"
 #include "Tympan/models/business/material/TYSol.h"
+#include "Tympan/gui/dllexport.h"
 
 ///Structure contenant un segment et un terrain.
 typedef struct
@@ -48,7 +49,7 @@ typedef struct
 /**
  * Centralise les elements de topographie.
  */
-class TYTopographie: public TYElement
+class TYMPAN_EXPORT TYTopographie: public TYElement
 {
     OPROTODECL(TYTopographie)
     TY_EXTENSION_DECL_ONLY(TYTopographie)

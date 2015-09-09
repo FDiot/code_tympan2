@@ -26,12 +26,12 @@
 
 #include "TYElement.h"
 #include "Tympan/models/business/QT2DOM.h"
-
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Classe pour la gestion de l'import et l'export des elements Tympan en XML.
  */
-class TYXMLManager
+class TYMPAN_EXPORT TYXMLManager
 {
     // Methodes
 public:

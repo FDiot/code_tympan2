@@ -32,6 +32,7 @@
 #include "Tympan/models/business/TYMaillage.h"
 #include "Tympan/models/business/TYPointControl.h"
 #include "Tympan/models/business/TYResultat.h"
+#include "Tympan/gui/dllexport.h"
 
 class TYProjet;
 
@@ -46,7 +47,7 @@ class TYProjet;
  * Le programme qui definit les Calculs.
  *
  */
-class TYCalcul: public TYElement
+class TYMPAN_EXPORT TYCalcul: public TYElement
 {
     OPROTODECL(TYCalcul)
     TY_EXTENSION_DECL_ONLY(TYCalcul)

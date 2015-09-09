@@ -25,11 +25,12 @@
 #include "TYRepere.h"
 #include "TYPolygon.h"
 #include "TYSurfaceInterface.h"
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Classe de definition d'un rectangle.
  */
-class TYRectangle: public TYElement, public TYSurfaceInterface
+class TYMPAN_EXPORT TYRectangle: public TYElement, public TYSurfaceInterface
 {
     OPROTODECL(TYRectangle)
     TY_EXTENSION_DECL_ONLY(TYRectangle)

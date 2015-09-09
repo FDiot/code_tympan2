@@ -23,12 +23,12 @@
 
 #include "TYSourcePonctuelle.h"
 #include "TYUserSrcRegime.h"
-
+#include "Tympan/gui/dllexport.h"
 
 /**
  * Classe de definition d'une source ponctuelle.
  */
-class TYUserSourcePonctuelle: public TYSourcePonctuelle
+class TYMPAN_EXPORT TYUserSourcePonctuelle: public TYSourcePonctuelle
 {
     OPROTODECL(TYUserSourcePonctuelle)
     TY_EXTENSION_DECL_ONLY(TYUserSourcePonctuelle)

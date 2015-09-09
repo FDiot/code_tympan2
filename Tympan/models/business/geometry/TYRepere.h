@@ -23,11 +23,13 @@
 #include "Tympan/models/common/3d.h"
 #include "Tympan/models/business/TYElement.h"
 #include "TYPoint.h"
+#include "Tympan/gui/dllexport.h"
+
 
 /**
  * Classe de definition d'un repere.
  */
-class TYRepere: public TYElement, public ORepere3D
+class TYMPAN_EXPORT TYRepere: public TYElement, public ORepere3D
 {
     OPROTODECL(TYRepere)
     TY_EXTENSION_DECL_ONLY(TYRepere)

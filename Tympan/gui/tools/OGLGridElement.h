@@ -26,6 +26,7 @@
 
 #include "OGLElement.h"
 #include "Tympan/core/color.h"
+#include "Tympan/gui/dllexport.h"
 
 #include <qstring.h>
 
@@ -34,7 +35,7 @@ class OGLGrid;
 /**
  * Classe pour la grille OGL
  */
-class OGLGridElement : public OGLElement
+class TYMPAN_EXPORT OGLGridElement : public OGLElement
 {
 public:
     /**

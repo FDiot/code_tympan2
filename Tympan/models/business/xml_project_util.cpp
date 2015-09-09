@@ -17,7 +17,7 @@
 namespace tympan
 {
 
-LPTYProjet load_project(const char* filename)
+LPTYProjet TYMPAN_EXPORT load_project(const char* filename)
 {
     TYXMLManager xmlManager;
     LPTYElementArray elements;
@@ -50,7 +50,7 @@ LPTYProjet load_project(const char* filename)
     return project;
 }
 
-void save_project(const char* filename, const LPTYProjet& project)
+void TYMPAN_EXPORT save_project(const char* filename, const LPTYProjet& project)
 {
     if (!project)
     {

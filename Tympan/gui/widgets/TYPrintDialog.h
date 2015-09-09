@@ -34,6 +34,8 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>
+#include "Tympan/gui/dllexport.h"
+
 class QVBoxLayout;
 class QHBoxLayout;
 class QGridLayout;
@@ -48,7 +50,7 @@ class QPushButton;
  * \brief classe pour une boite de dialogue des parametres d'impression.
  */
 
-class TYPrintDialog : public QDialog
+class TYMPAN_EXPORT TYPrintDialog : public QDialog
 {
     Q_OBJECT
 

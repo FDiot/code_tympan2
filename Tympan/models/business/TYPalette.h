@@ -27,6 +27,7 @@
 
 #include "Tympan/core/color.h"
 #include "Tympan/models/business/TYElement.h"
+#include "Tympan/gui/dllexport.h"
 
 /**
  * \file TYPalette.h
@@ -37,7 +38,7 @@
  * \date 2008/04/17
  *
  */
-class TYPalette : public TYElement
+class TYMPAN_EXPORT TYPalette : public TYElement
 {
     OPROTODECL(TYPalette)
     TY_EXTENSION_DECL_ONLY(TYPalette)
