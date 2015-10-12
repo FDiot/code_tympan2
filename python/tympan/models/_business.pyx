@@ -171,7 +171,7 @@ cdef class AcousticSurface:
             # Assert consistency of the tycommon.OPoint3D given in the mesh
             assert (deref(itt).checkConsistencyWrtPointsTab(pts),
                     deref(itt).reportInconsistencyWrtPointsTab(pts))
-            tri = cy.declare(cy.pointer(tycommon.OTriangle), 
+            tri = cy.declare(cy.pointer(tycommon.OTriangle),
                              new tycommon.OTriangle(deref(itt)._p1, deref(itt)._p2, deref(itt)._p3))
             triangles.append(tycommon.otriangle2triangle(tri))
             inc(itt)
@@ -290,7 +290,7 @@ cdef class Site:
 
         Return a list of tuples (elt_id, elt_name)
         """
-        infra = cy.declare(cy.pointer(TYInfrastructure), 
+        infra = cy.declare(cy.pointer(TYInfrastructure),
                            self.thisptr.getRealPointer().getInfrastructure().getRealPointer())
         outdated = cy.declare(vector[SmartPtr[TYElement]], infra.getTabElemNOk())
         nb_outdated = outdated.size()
@@ -302,7 +302,6 @@ cdef class Site:
         for subsite in self.subsites:
             outdated_info.extend(subsite.outdated_elements)
         return outdated_info
-
 
     @property
     def project(self):
@@ -688,7 +687,7 @@ cdef class Result:
         """The computed acoustic spectrum"""
         assert self.thisptr.getRealPointer() != NULL
         return tycommon.ospectre2spectrum(
-                        self.thisptr.getRealPointer().getSpectre2(
+                        self.thisptr.getRealPointer().getSpectre(
                                         receptor.thisptr.getRealPointer(),
                                         source.thisptr.getRealPointer()  )   )
 
@@ -843,6 +842,19 @@ cdef class Computation:
                               downcast_Element(self.thisptr.getRealPointer()))
         cpp_elem.setName(name)
 
+    def set_solver(self, solverdir, name):
+        """`solver_name` will be used to solve this computation"""
+        assert self.thisptr.getRealPointer() != NULL
+        load_solvers(solverdir)
+        solverid = cy.declare(OGenID, solver_id(name))
+        self.thisptr.getRealPointer().setSolverId(solverid)
+
+    @property
+    def solver_id(self):
+        """The identifier of the solver that will be used to solve the computation"""
+        assert self.thisptr.getRealPointer() != NULL
+        return self.thisptr.getRealPointer().getSolverId().toString().toStdString()
+
 
 cdef class Project:
     thisptr = cy.declare(SmartPtr[TYProjet])
@@ -861,13 +873,14 @@ cdef class Project:
         self.update()
 
     @cy.locals(comp=Computation)
-    def add_new_comp(self):
-        """ Add a new computation to the project """
+    def add_computation(self):
+        """Add a new computation to the project and return it"""
         comp = make_computation()
         self.thisptr.getRealPointer().addCalcul(comp.thisptr)
+        return comp
 
     @cy.locals(comp=Computation)
-    def set_current_computation(self, comp):
+    def select_computation(self, comp):
         """ set the current computation """
         self.thisptr.getRealPointer().setCurrentCalcul(comp.thisptr)
 
@@ -878,7 +891,6 @@ cdef class Project:
         comp = Computation()
         comp.thisptr = self.thisptr.getRealPointer().getCurrentCalcul()
         return comp
-
 
     @property
     def computations(self):
