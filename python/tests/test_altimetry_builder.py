@@ -22,7 +22,7 @@ class AltimetryBuilderTC(unittest.TestCase, TestFeatures):
         TestFeatures.build_features(self)
         TestFeatures.build_more_features_in_subsites(self)
         # NB Level curve A intersects this one : altitudes must be the same
-        self.landtake_level_curve = LevelCurve(
+        landtake_level_curve = LevelCurve(
             self.big_rect_coords, altitude=self.altitude_A, close_it=True,
             parent_site=self.mainsite, id="{Mainsite ref altitude}")
 
@@ -158,7 +158,7 @@ class AltimetryBuilderTC(unittest.TestCase, TestFeatures):
     @unittest.skipUnless(runVisualTests, "Set RUN_VISUAL_TESTS env. variable to run me")
     def test_plot_landtake_flooding(self):
         cleaner = builder.recursively_merge_all_subsites(self.mainsite)
-        site = cleaner.merged_site()
+        msite = cleaner.merged_site()
         mbuilder = builder.MeshBuilder(msite)
         bmesh = mbuilder.build_mesh(refine=False)
 
@@ -180,6 +180,48 @@ class AltimetryBuilderTC(unittest.TestCase, TestFeatures):
             if material is None : continue
             plotter.plot_face(fh, material_id=material.id)
         plotter.show()
+
+    def test_building_outside_landtake(self):
+        # outside landtake
+        InfrastructureLandtake(rect(13, 12, 15, 17),
+                               parent_site=self.mainsite,
+                               id="{external building}")
+        # intersecting with landtake
+        InfrastructureLandtake(rect(10, 10, 13, 15),
+                               parent_site=self.mainsite,
+                               id="{intersecting building}")
+        equivalent_site, mesh, feature_by_face = builder.build_altimetry(
+            self.mainsite)
+        # it makes no sense having a site intersecting a building. Make sure
+        # none of these buildings will be taken into account.
+        self.assertEqual(len(equivalent_site.landtakes), 1)
+        self.assertEqual(equivalent_site.landtakes[0].id, '{Building}')
+
+    def test_intersecting_level_curves_error(self):
+        # build a new level curve that intersects site landtake level curve and
+        # has a different altitude
+        other_level_curve_coords = [(-2, -3), (1, 2)]
+        level_curve =  LevelCurve(other_level_curve_coords,
+                                  altitude = 20.,
+                                  parent_site=self.mainsite, id="{Other level curve}")
+        cleaner = builder.recursively_merge_all_subsites(self.mainsite)
+        msite = cleaner.merged_site()
+        mbuilder = builder.MeshBuilder(msite)
+        with self.assertRaises(InconsistentGeometricModel) as cm:
+            bmesh = mbuilder.build_mesh(refine=False)
+        self.assertEqual(str(cm.exception),
+                         "Intersecting constraints with different altitudes: "
+                         "['{Mainsite ref altitude}', '{Other level curve}']")
+
+    def test_subsite_intersects_with_site(self):
+        self.mainsite.drop_child(self.subsite)
+        subsite = SiteNode(rect(-1, -1, 7, 5), id="{Intersecting subsite}",
+                           parent_site=self.mainsite)
+        with self.assertRaises(RuntimeError) as cm:
+            builder.recursively_merge_all_subsites(self.mainsite)
+        self.assertEqual(str(cm.exception),
+                         'SiteNode #{Intersecting subsite} is not strictly '
+                         'contained in main site')
 
     def test_join_with_landtakes(self):
         equivalent_site, mesh, feature_by_face = builder.build_altimetry(
@@ -211,6 +253,7 @@ class AltimetryBuilderTC(unittest.TestCase, TestFeatures):
                 self.assertEqual(materials.count, 5)
         finally:
             os.remove(f.name)
+
 
 if __name__ == '__main__':
     unittest.main()
