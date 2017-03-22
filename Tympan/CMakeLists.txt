@@ -236,6 +236,25 @@ target_link_libraries(tympan_convexhullfinder
 )
 install_tympan_component(tympan_convexhullfinder)
 
+# anime3d lib for tests  #####################################################################
+file(GLOB TYMPAN_SOLVER_ANIME3D_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    solvers/ANIME3DSolver/*.cpp solvers/ANIME3DSolver/*.h
+    solvers/ANIME3DSolver/*/*.cpp solvers/ANIME3DSolver/*/*.h
+)
+
+link_directories(${CGAL_LIBRARIES_DIR})
+add_library(tympan_solver_anime3d_lib ${TYMPAN_COMPONENT_TYPE} ${TYMPAN_SOLVER_ANIME3D_SRCS})
+set_property(TARGET tympan_solver_anime3d_lib PROPERTY FOLDER "Tympan/solvers/ANIME3DSolver")
+target_link_libraries(tympan_solver_anime3d_lib
+    ${QT_QTCORE_LIBRARY} # qlist, QTime, QMutex QSharedPointer QTime
+    tympan_common
+    tympan_solver_model
+    tympan_analyticraytracer
+    tympan_acousticraytracer
+)
+
+install_tympan_component(tympan_solver_anime3d_lib)
+
 # main app #####################################################################
 
 file(GLOB TYMPAN_APP_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
