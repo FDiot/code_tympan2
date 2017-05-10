@@ -13,15 +13,12 @@
 
 #include "gtest/gtest.h"
 #include "Tympan/models/solver/config.h"
-#include "Tympan/solvers/AcousticRaytracer/Engine/Simulation.h"
-#include "Tympan/solvers/AcousticRaytracer/Acoustic/Source.h"
-#include "Tympan/solvers/AcousticRaytracer/Geometry/Latitude2DSampler.h"
+#include "Tympan/geometric_methods/AcousticRaytracer/Engine/Simulation.h"
+#include "Tympan/geometric_methods/AcousticRaytracer/Acoustic/Source.h"
+#include "Tympan/geometric_methods/AcousticRaytracer/Geometry/Latitude2DSampler.h"
+#include "Tympan/geometric_methods/AcousticRaytracer/Acoustic/PostTreatment.h"
+#include "Tympan/geometric_methods/AcousticRaytracer/Geometry/UniformSphericSampler2.h"
 #include "Tympan/solvers/ANIME3DSolver/TYANIME3DRayTracerSolverAdapter.h"
-#include "Tympan/solvers/AcousticRaytracer/Acoustic/PostTreatment.h"
-#include "Tympan/solvers/AcousticRaytracer/Geometry/UniformSphericSampler2.h"
-
-#include <iostream>
-#include <fstream>
 
 using std::cout;
 using std::cerr;
@@ -282,10 +279,8 @@ TEST(test_simulation_1source_1recepteur, test_valid_ray)
 
 	// Clean simulation
 	simu.clean();
-}
-// The configuration of the ray tracer:
-	tympan::LPSolverConfiguration config =tympan::SolverConfiguration::get();
 
+}
 
 // Test with one obstacle between the source and the receptor
 TEST(test_simulation_1source_1recepteur, test_obstacle)
@@ -331,7 +326,8 @@ TEST(test_simulation_1source_1recepteur, test_reflexion1)
 	simu.getScene()->addVertex(vec3(10,0,5), p1);
 	simu.getScene()->addVertex(vec3(10,5,0), p2);
 	simu.getScene()->addVertex(vec3(10,-5,0), p3);
-	simu.getScene()->addTriangle(p1,p2,p3,&Material());
+	Material m;
+	simu.getScene()->addTriangle(p1,p2,p3,&m);
 
 	unsigned int p4,p5,p6;
 	simu.getScene()->addVertex(vec3(0,0,5), p4);
@@ -373,14 +369,13 @@ TEST(test_simulation_1source_1recepteur, test_reflexion1)
 	EXPECT_TRUE(ray->direction==dir_right);					//Test ray final direction									
 	EXPECT_EQ(35,ray->getLongueur());						//Test ray length
 
-	std::vector<QSharedPointer<Event> >* events=ray->getEvents();
+	std::vector<std::shared_ptr<Event> >* events=ray->getEvents();
 
 	//Test number of events
 	EXPECT_EQ(config->MaxReflexion,ray->getNbEvents());						
 	EXPECT_EQ(config->MaxReflexion,events->size());		 
 
 	//Test events
-	QSharedPointer<Event> e=events->at(0);
 	EXPECT_EQ(SPECULARREFLEXION,e.value->getType());			//Test type
 	EXPECT_TRUE(vec3(10,0,0)==e.value->getPosition());			//Test position
 	EXPECT_TRUE(e.value->getIncomingDirection()==dir_right);	//Test incoming direction
