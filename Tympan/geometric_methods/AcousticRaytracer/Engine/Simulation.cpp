@@ -14,7 +14,6 @@
 */
 
 #include "Simulation.h"
-
 void Simulation::clean()
 {
     scene.clean();
@@ -51,7 +50,6 @@ bool Simulation::launchSimulation()
 #else
 bool Simulation::launchSimulation()
 {
-    ss << "Lancement de la simulation." << std::endl;
     if (solver) { solver->clean(); }
     if (engine) { delete engine; }
     switch (engineC)
