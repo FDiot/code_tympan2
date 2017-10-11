@@ -46,7 +46,7 @@ def solve(input_project, output_project, output_mesh, solverdir, parameters = {}
     if interactive:
         import pdb
         pdb.set_trace()
-    ret = False
+
     # Load an existing project and retrieve its calcul to solve it
     try:
         logging.info("Trying to load project ...")

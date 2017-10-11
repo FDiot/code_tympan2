@@ -64,52 +64,26 @@ def build_sitenode(ty_site, mainsite=True):
     altimetry_site = SiteNode(coords=points_to_coords(points),
                               id=ty_site.elem_id)
     if cylcurve is not None:
-        lctype = SiteLandtake if mainsite else LevelCurve
+        close_it = False
         if cylcurve.points[0] != cylcurve.points[-1]:
             warn('main site landtake (or surrounding level curve) does not '
                  'appear to be closed; closing it for altimetry processing',
                  RuntimeWarning)
             close_it = True
-        else:
-            close_it = False
+        lctype = SiteLandtake if mainsite else LevelCurve
         alcurve = lctype(
             coords=points_to_coords(cylcurve.points),
             altitude=cylcurve.altitude,
             close_it=close_it,
             id=cylcurve.elem_id)
         altimetry_site.add_child(alcurve)
+
     # Water bodies
-    water_material = None
-    for cylake in ty_site.lakes:
-        # Build water material
-        cywater = cylake.ground_material
-        alwater = ground_material_from_business(cywater)
-        if not water_material:
-            water_material = cywater.elem_id
-            datamodel.MATERIAL_WATER = alwater
-        allake = WaterBody(
-            coords=points_to_coords(cylake.points),
-            altitude=cylake.altitude,
-            id=cylake.elem_id)
-        altimetry_site.add_child(allake)
+    add_lake(ty_site, altimetry_site)
+
     # Other material areas
-    default_material = None
-    for cymarea in ty_site.material_areas:
-        # Build a ground material
-        cymaterial = cymarea.ground_material
-        almaterial = ground_material_from_business(cymaterial)
-        # Build a material area made of the above defined ground material
-        if not cymarea.points:
-            if mainsite:
-                assert not default_material, "Found several default materials"
-                default_material = cymaterial.elem_id
-                datamodel.DEFAULT_MATERIAL = almaterial
-                continue
-            else:
-                almatarea = build_material_area(cymarea, almaterial, points)
-        else:
-            almatarea = build_material_area(cymarea, almaterial)
-        altimetry_site.add_child(almatarea)
+    add_material(ty_site, altimetry_site, points, mainsite)
+
     # Level curves
     for cylcurve in ty_site.level_curves:
         if len(cylcurve.points) == 1:
@@ -132,6 +106,44 @@ def build_sitenode(ty_site, mainsite=True):
         asbsite = build_sitenode(cysbsite, mainsite=False)
         altimetry_site.add_child(asbsite)
     return altimetry_site
+
+
+def add_lake(ty_site, altimetry_site):
+    # Water bodies
+    water_material = None
+    for cylake in ty_site.lakes:
+        # Build water material
+        cywater = cylake.ground_material
+        alwater = ground_material_from_business(cywater)
+        if not water_material:
+            water_material = cywater.elem_id
+            datamodel.MATERIAL_WATER = alwater
+        allake = WaterBody(
+            coords=points_to_coords(cylake.points),
+            altitude=cylake.altitude,
+            id=cylake.elem_id)
+        altimetry_site.add_child(allake)
+
+
+def add_material(ty_site, altimetry_site, material_border_points, is_mainsite):
+    # Material
+    default_material = None
+    for cymarea in ty_site.material_areas:
+        # Build a ground material
+        cymaterial = cymarea.ground_material
+        almaterial = ground_material_from_business(cymaterial)
+        # Build a material area made of the above defined ground material
+        if not cymarea.points:
+            if is_mainsite:
+                assert not default_material, "Found several default materials"
+                default_material = cymaterial.elem_id
+                datamodel.DEFAULT_MATERIAL = almaterial
+                continue
+            else:
+                almatarea = build_material_area(cymarea, almaterial, material_border_points)
+        else:
+            almatarea = build_material_area(cymarea, almaterial)
+        altimetry_site.add_child(almatarea)
 
 
 # Altimetry mesh building utilities.
@@ -308,6 +320,11 @@ class MeshFiller(object):
     def fill_material_and_landtakes(self, mainsite, cleaner):
         """Build the face to geometrical feature mapping."""
         feature_by_face = {}
+        self.fill_lantakes(mainsite, feature_by_face)
+        self.fill_material(mainsite, feature_by_face, cleaner)
+        return feature_by_face
+
+    def fill_lantakes(self, mainsite, feature_by_face):
         # Fill landtakes using the flooding algorithm.
         for feature in mainsite.landtakes:
             _check_feature_inserted(feature, mainsite)
@@ -316,6 +333,8 @@ class MeshFiller(object):
                 for fh in faces:
                     if fh not in feature_by_face:
                         feature_by_face[fh] = feature
+
+    def fill_material(self, mainsite, feature_by_face, cleaner):
         # Fill material areas by finding the underlying feature based on the
         # position of face "middle point".
         features = _material_area_features(mainsite, cleaner)
@@ -333,7 +352,6 @@ class MeshFiller(object):
                     break
             else:
                 feature_by_face[fh] = None
-        return feature_by_face
 
     def _faces_for_polygonal_feature(self, feature, flooder_class):
         """Return the list of faces within a polygonal feature"""
