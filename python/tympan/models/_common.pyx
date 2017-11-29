@@ -39,9 +39,23 @@ cdef class Spectrum:
         """Build a Spectrum, possibly out of ndarray `values`"""
         if values is None:
             return
-        assert len(values) == 31
-        #self.thisobj = OSpectre(&values[0], 31, 0)
-        self.thisobj = OSpectre(<double *> values.data, 31, 0)
+        self.thisobj = OSpectre(<double *> values.data, len(values), 0)
+        self.thisobj.setEtat(SPECTRE_ETAT_DB)
+        self.thisobj.setType(SPECTRE_TYPE_LW)
+
+    @classmethod
+    def constant(cls, value):
+        """Build a Spectrum instance from a constant `value`."""
+        return cls(np.ones(31) * value)
+
+    def __len__(self):
+        return len(self.values)
+
+    def __mul__(self, other):
+        newvalues = self.values * other
+        if newvalues is NotImplemented:
+            return NotImplemented
+        return self.__class__(newvalues)
 
     @property
     def nvalues(self):
