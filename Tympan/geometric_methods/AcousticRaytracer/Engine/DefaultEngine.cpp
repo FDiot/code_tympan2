@@ -249,11 +249,11 @@ void DefaultEngine::runStructureBenchmark()
         Ray r;
         r.setMint ( 0.00001f);
         r.setMaxt ( 10000.);
-        r.setDirection ( vec3((double)rand() / (double)RAND_MAX, (double)rand() / (double)RAND_MAX, (double)rand() / (double)RAND_MAX) );
+        r.setDirection ( vec3((decimal)rand() / (decimal)RAND_MAX, (decimal)rand() / (decimal)RAND_MAX, (decimal)rand() / (decimal)RAND_MAX) );
         r.getDirection().normalize();
-        r.setPosition ( vec3(((double)rand() / (double)RAND_MAX) * (sceneBox.pMax.x - sceneBox.pMin.x) + sceneBox.pMin.x,
-                          ((double)rand() / (double)RAND_MAX) * (sceneBox.pMax.y - sceneBox.pMin.y) + sceneBox.pMin.y,
-                          ((double)rand() / (double)RAND_MAX) * (sceneBox.pMax.z - sceneBox.pMin.z) + sceneBox.pMin.z) );
+        r.setPosition ( vec3(((decimal)rand() / (decimal)RAND_MAX) * (sceneBox.pMax.x - sceneBox.pMin.x) + sceneBox.pMin.x,
+                          ((decimal)rand() / (decimal)RAND_MAX) * (sceneBox.pMax.y - sceneBox.pMin.y) + sceneBox.pMin.y,
+                          ((decimal)rand() / (decimal)RAND_MAX) * (sceneBox.pMax.z - sceneBox.pMin.z) + sceneBox.pMin.z));
         Accelerator* accel = scene->getAccelerator();
         std::list<Intersection> foundPrims;
         accel->traverse(&r, foundPrims);

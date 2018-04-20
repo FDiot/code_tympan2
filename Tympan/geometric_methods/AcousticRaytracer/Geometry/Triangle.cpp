@@ -91,7 +91,7 @@ bool Triangle::getIntersection(Ray& ray, Intersection& inter)
 
     if (iu >= -0.00001 && iu <= 1.00001 && iv >= -0.00001 && iv <= 1.00001 && ir >= -0.00001 && iu + iv <= 1.00001) //Detection du point d'intersection
     {
-        inter.t =  ir;
+        inter.t = (decimal)ir;
         inter.p = this;
         inter.forme = TRIANGLE;
         return true;
@@ -105,7 +105,7 @@ bool Triangle::sample(decimal density, std::vector<vec3>& samples)
 
     vec3 proj = vertices->at(localVertices.at(0)).closestPointOnLine(vertices->at(localVertices.at(1)), vertices->at(localVertices.at(2)));
 
-    decimal areaTriangle = vertices->at(localVertices.at(1)).distance(vertices->at(localVertices.at(2))) * proj.distance(vertices->at(localVertices.at(0))) / 2.;
+    decimal areaTriangle = (decimal)(vertices->at(localVertices.at(1)).distance(vertices->at(localVertices.at(2))) * proj.distance(vertices->at(localVertices.at(0))) / 2.);
 
     unsigned int nbSamples = (unsigned int)(areaTriangle * density) + 1;
 

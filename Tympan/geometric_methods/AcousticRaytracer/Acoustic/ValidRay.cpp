@@ -151,7 +151,7 @@ bool ValidRay::computeRealImpact(Ray *r, Intersection* inter, Cylindre *cylindre
 	decimal *mua = new decimal(); //position of a along the ray
 	decimal *mub = new decimal(); //position of b along the diffraction edge
 
-	bool res = LineLineIntersect(p1, p2, p3, p4, pa, pb, mua, mub);
+	int res = LineLineIntersect(p1, p2, p3, p4, pa, pb, mua, mub);
 
 	impact = *pb; // pb corrsponds to the impact of the ray on the diffraction edge
 
@@ -217,13 +217,13 @@ bool ValidRay::validCylindreWithDiffraction(Ray* r, Intersection* inter)
 	}
 	else
 	{
-		diff_nb_rays = r->getSource()->getSampler()->computeDiffractionNbr(M_PIDIV2 - newEvent->getAngle());
+		diff_nb_rays = (unsigned int)(r->getSource()->getSampler()->computeDiffractionNbr((decimal)(M_PIDIV2 - newEvent->getAngle())));
 	}
 
 // Reduce (if needed) number of rays thrown depending on the diffraction order
 	if ( config->DiffractionDropDownNbRays )
 	{
-		diff_nb_rays = diff_nb_rays / pow( static_cast<float>(2), static_cast<int>(r->getDiff()) );
+		diff_nb_rays = (unsigned int)(diff_nb_rays / pow( static_cast<float>(2), static_cast<int>(r->getDiff())));
 	}
 
 	diff_nb_rays += 1; // DO NOT MOVE/CONCATENATE THIS OPERATION ON UPPER LINES !!!
