@@ -63,7 +63,7 @@ void getThetaRandom(const decimal& angleOuverture, const decimal & delta_theta, 
 
 	if (theta > angleOuverture / 2.)
 	{
-		theta += (2 * M_PI - angleOuverture);
+		theta += ((decimal)(2 * M_PI) - angleOuverture);
 	}
 }
 
@@ -132,7 +132,7 @@ bool Diffraction::getResponse(vec3& r, bool force)
 		decimal theta = 0.;
 		// get the angle of the next response around Keller's cone 
 		// (avoids returning an angle that would result in a response pointing inside the obstacle)
-		(*getTheta) (angleOuverture, delta_theta, nbResponseLeft, theta);
+		(*getTheta) (angleOuverture, delta_theta, (decimal)nbResponseLeft, theta);
 
 #ifdef _ALLOW_TARGETING_
 		if (!force)
@@ -222,7 +222,7 @@ bool Diffraction::generateTest(std::vector<vec3>& succededTest, std::vector<vec3
 {
     for (unsigned int i = 0; i < nbResponses; i++)
     {
-        vec3 newDir = vec3(((decimal)rand() / (decimal)RAND_MAX) * 2. - 1., ((decimal)rand() / (decimal)RAND_MAX) * 2. - 1., ((decimal)rand() / (decimal)RAND_MAX) * 2. - 1.);
+        vec3 newDir = vec3(((decimal)rand() / (decimal)RAND_MAX) * 2.f - 1.f, ((decimal)rand() / (decimal)RAND_MAX) * 2.f - 1.f, ((decimal)rand() / (decimal)RAND_MAX) * 2.f - 1.f);
         newDir.normalize();
         if (isAcceptableResponse(newDir))
         {

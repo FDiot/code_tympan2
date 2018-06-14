@@ -185,7 +185,7 @@ bool Cylindre::sample(decimal density, std::vector<vec3>& samples)
 
     decimal lenght = v1.distance(v2);
 
-    unsigned int nbSamples = lenght * density + 1;
+    unsigned int nbSamples = (unsigned int)(lenght * density) + 1;
 
     for (unsigned int i = 0; i < nbSamples; i++)
     {
